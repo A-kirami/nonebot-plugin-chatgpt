@@ -71,11 +71,13 @@ _✨ ChatGPT AI 对话 ✨_
 
 在 nonebot2 项目的`.env`文件中添加下表中的必填配置
 
-| 配置项 | 必填 | 默认值 |  说明 |
+| 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
 | CHATGPT_SESSION_TOKEN | 是 | 无 | ChatGPT 的 session_token |
 | CHATGPT_PROXIES | 否 | None | 代理地址，格式为： `http://ip:port` |
 | CHATGPT_REFRESH_INTERVAL | 否 | 30 | session_token 自动刷新间隔，单位：分钟 |
+| CHATGPT_COMMAND | 否 | 空字符串 | 触发聊天的命令，可以是 `字符串` 或者 `字符串列表`。<br>如果为空字符串或者空列表，则默认响应全部消息  |
+| CHATGPT_TO_ME | 否 | True | 是否需要@机器人 |
 
 ### 获取 session_token
 
@@ -88,4 +90,6 @@ _✨ ChatGPT AI 对话 ✨_
 
 ## 🎉 使用
 
-@机器人加任意文本即可。
+默认配置下，@机器人加任意文本即可。
+
+如果需要修改插件的触发方式，自定义 `CHATGPT_COMMAND` 和 `CHATGPT_TO_ME` 配置项即可。
