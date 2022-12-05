@@ -21,10 +21,11 @@ session = defaultdict(dict)
 @chat.handle()
 async def _(event: MessageEvent) -> None:
     text = event.get_plaintext()
-    msg = await chat_bot(**session[event.user_id]).get_chat_response(text)
+    session_id = event.get_session_id()
+    msg = await chat_bot(**session[session_id]).get_chat_response(text)
     await chat.send(msg, at_sender=True)
-    session[event.user_id]["conversation_id"] = chat_bot.conversation_id
-    session[event.user_id]["parent_id"] = chat_bot.parent_id
+    session[session_id]["conversation_id"] = chat_bot.conversation_id
+    session[session_id]["parent_id"] = chat_bot.parent_id
 
 
 @scheduler.scheduled_job("interval", minutes=config.chatgpt_refresh_interval)
