@@ -1,0 +1,19 @@
+[project]
+name = "nonebot-plugin-chatgpt"
+version = "0.1.0"
+description = "NoneBot2 plugin for AI chat"
+authors = [
+    {name = "Akirami", email = "Akiramiaya@outlook.com"},
+]
+license = {text = "MIT"}
+dependencies = ["nonebot2>=2.0.0rc2", "nonebot-adapter-onebot>=2.1.5", "httpx>=0.23.0", "nonebot-plugin-apscheduler>=0.2.0"]
+requires-python = ">=3.8"
+readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/A-kirami/nonebot-plugin-chatgpt"
+Repository = "https://github.com/A-kirami/nonebot-plugin-chatgpt"
+
+[build-system]
+requires = ["pdm-pep517>=0.12.0"]
+build-backend = "pdm.pep517.api"
