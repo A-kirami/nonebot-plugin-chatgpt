@@ -5,6 +5,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import to_me
 
 from .chatgpt import Chatbot
+from .config import config
 
 require("nonebot_plugin_apscheduler")
 
@@ -26,6 +27,6 @@ async def _(event: MessageEvent) -> None:
     session[event.user_id]["parent_id"] = chat_bot.parent_id
 
 
-@scheduler.scheduled_job("interval", minutes=3)
+@scheduler.scheduled_job("interval", minutes=config.chatgpt_refresh_interval)
 async def refresh_session() -> None:
     await chat_bot.refresh_session()

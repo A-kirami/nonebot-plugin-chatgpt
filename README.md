@@ -75,6 +75,7 @@ _✨ ChatGPT AI 对话 ✨_
 |:-----:|:----:|:----:|:----:|
 | CHATGPT_SESSION_TOKEN | 是 | 无 | ChatGPT 的 session_token |
 | CHATGPT_PROXIES | 否 | None | 代理地址，格式为： `http://ip:port` |
+| CHATGPT_REFRESH_INTERVAL | 否 | 30 | session_token 自动刷新间隔，单位：分钟 |
 
 ### 获取 session_token
 
