@@ -66,7 +66,7 @@ class Chatbot:
                 "https://chat.openai.com/backend-api/conversation",
                 headers=self.headers,
                 data=json.dumps(self.generate_data(prompt)),  # type: ignore
-                timeout=10,
+                timeout=config.chatgpt_timeout,
             )
         try:
             response = response.text.splitlines()[-4]
@@ -83,7 +83,7 @@ class Chatbot:
         async with httpx.AsyncClient(
             cookies=cookies,
             proxies=config.chatgpt_proxies,  # type: ignore
-            timeout=10,
+            timeout=config.chatgpt_timeout,
         ) as client:
             response = await client.get("https://chat.openai.com/api/auth/session")
         try:

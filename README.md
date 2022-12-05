@@ -78,6 +78,8 @@ _✨ ChatGPT AI 对话 ✨_
 | CHATGPT_REFRESH_INTERVAL | 否 | 30 | session_token 自动刷新间隔，单位：分钟 |
 | CHATGPT_COMMAND | 否 | 空字符串 | 触发聊天的命令，可以是 `字符串` 或者 `字符串列表`。<br>如果为空字符串或者空列表，则默认响应全部消息  |
 | CHATGPT_TO_ME | 否 | True | 是否需要@机器人 |
+| CHATGPT_TIMEOUT | 否 | 10 | 请求的超时时间，单位：秒 |
+
 
 ### 获取 session_token
 

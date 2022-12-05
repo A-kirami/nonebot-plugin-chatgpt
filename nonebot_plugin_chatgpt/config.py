@@ -10,6 +10,7 @@ class Config(BaseModel, extra=Extra.ignore):
     chatgpt_refresh_interval: int = 30
     chatgpt_command: Union[str, List[str]] = ""
     chatgpt_to_me: bool = True
+    chatgpt_timeout: int = 10
 
 
 config = Config.parse_obj(get_driver().config)
