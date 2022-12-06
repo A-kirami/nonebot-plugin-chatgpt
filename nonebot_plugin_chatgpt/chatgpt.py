@@ -70,14 +70,13 @@ class Chatbot:
                 json=self.get_payload(prompt),
                 timeout=config.chatgpt_timeout,
             )
-        if "text/event-stream" not in response.headers.get("content-type"):
+        if response.status_code == 429:
+            return "请求过多，请放慢速度"
+        if response.is_error:
             logger.opt(colors=True).error(
-                f"Invalid response content: <r>HTTP{response.status_code}</r>, {response.text}"
+                f"Unexpected response content: <r>HTTP{response.status_code}</r> {response.text}"
             )
         lines = response.text.splitlines()
-        if "detail" in lines[0]:
-            detail = json.loads(lines[0])["detail"]
-            return detail if isinstance(detail, str) else detail["message"]
         data = lines[-4][6:]
         response = json.loads(data)
         self.parent_id = response["message"]["id"]
