@@ -86,7 +86,12 @@ class Chatbot:
             proxies=config.chatgpt_proxies,  # type: ignore
             timeout=config.chatgpt_timeout,
         ) as client:
-            response = await client.get("https://chat.openai.com/api/auth/session")
+            response = await client.get(
+                "https://chat.openai.com/api/auth/session",
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+                },
+            )
         try:
             self.session_token = response.cookies.get(SESSION_TOKEN, "")  # type: ignore
             self.authorization = response.json()["accessToken"]
