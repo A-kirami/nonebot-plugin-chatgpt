@@ -37,13 +37,14 @@ class Chatbot:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.authorization}",
             "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
         }
 
     def reset_chat(self) -> None:
         self.conversation_id = None
         self.parent_id = self.id
 
-    def generate_data(self, prompt: str) -> Dict[str, Any]:
+    def get_payload(self, prompt: str) -> Dict[str, Any]:
         return {
             "action": "next",
             "messages": [
@@ -65,7 +66,7 @@ class Chatbot:
             response = await client.post(
                 "https://chat.openai.com/backend-api/conversation",
                 headers=self.headers,
-                data=json.dumps(self.generate_data(prompt)),  # type: ignore
+                json=self.get_payload(prompt),
                 timeout=config.chatgpt_timeout,
             )
         try:
