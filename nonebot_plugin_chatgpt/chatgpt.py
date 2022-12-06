@@ -70,12 +70,16 @@ class Chatbot:
                 json=self.get_payload(prompt),
                 timeout=config.chatgpt_timeout,
             )
-        try:
-            response = response.text.splitlines()[-4]
-            response = response[6:]
-        except Exception as e:
-            raise NetworkError(f"Abnormal response content: {response.text}") from e
-        response = json.loads(response)
+        if "text/event-stream" not in response.headers.get("content-type"):
+            raise NetworkError(
+                f"Invalid response content: HTTP{response.status_code}, {response.text}"
+            )
+        lines = response.text.splitlines()
+        if "detail" in lines[0]:
+            detail = json.loads(lines[0])["detail"]
+            return detail if isinstance(detail, str) else detail["message"]
+        data = lines[-4][6:]
+        response = json.loads(data)
         self.parent_id = response["message"]["id"]
         self.conversation_id = response["conversation_id"]
         return response["message"]["content"]["parts"][0]
@@ -97,4 +101,6 @@ class Chatbot:
             self.session_token = response.cookies.get(SESSION_TOKEN, "")  # type: ignore
             self.authorization = response.json()["accessToken"]
         except Exception as e:
-            raise RuntimeError("Error refreshing session") from e
+            raise NetworkError(
+                f"Refresh session failed: HTTP{response.status_code}, {response.text}"
+            ) from e
