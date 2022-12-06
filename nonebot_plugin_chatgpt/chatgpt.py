@@ -41,10 +41,6 @@ class Chatbot:
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
         }
 
-    def reset_chat(self) -> None:
-        self.conversation_id = None
-        self.parent_id = self.id
-
     def get_payload(self, prompt: str) -> Dict[str, Any]:
         return {
             "action": "next",

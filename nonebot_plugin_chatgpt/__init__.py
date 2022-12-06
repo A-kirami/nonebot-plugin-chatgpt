@@ -67,7 +67,6 @@ refresh = on_command("刷新对话", aliases={"刷新会话"}, block=True, rule=
 async def refresh_conversation(event: MessageEvent) -> None:
     session_id = event.get_session_id()
     del session[session_id]
-    chat_bot.reset_chat()
     await refresh.send("当前会话已刷新")
 
 
