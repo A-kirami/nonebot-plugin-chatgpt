@@ -79,6 +79,7 @@ _✨ ChatGPT AI 对话 ✨_
 | CHATGPT_COMMAND | 否 | 空字符串 | 触发聊天的命令，可以是 `字符串` 或者 `字符串列表`。<br>如果为空字符串或者空列表，则默认响应全部消息  |
 | CHATGPT_TO_ME | 否 | True | 是否需要@机器人 |
 | CHATGPT_TIMEOUT | 否 | 10 | 请求的超时时间，单位：秒 |
+| chatgpt_api | 否 | https://chat.openai.com/ | API 地址，可配置反代 |
 
 
 ### 获取 session_token

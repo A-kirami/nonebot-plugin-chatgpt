@@ -1,5 +1,6 @@
 import uuid
 from typing import Any, Dict, Optional
+from urllib.parse import urljoin
 
 import httpx
 from nonebot.exception import NetworkError
@@ -64,7 +65,7 @@ class Chatbot:
             await self.refresh_session()
         async with httpx.AsyncClient(proxies=config.chatgpt_proxies) as client:  # type: ignore
             response = await client.post(
-                "https://chat.openai.com/backend-api/conversation",
+                urljoin(config.chatgpt_api, "backend-api/conversation"),
                 headers=self.headers,
                 json=self.get_payload(prompt),
                 timeout=config.chatgpt_timeout,
@@ -87,7 +88,7 @@ class Chatbot:
             timeout=config.chatgpt_timeout,
         ) as client:
             response = await client.get(
-                "https://chat.openai.com/api/auth/session",
+                urljoin(config.chatgpt_api, "api/auth/session"),
                 headers={
                     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
                 },
