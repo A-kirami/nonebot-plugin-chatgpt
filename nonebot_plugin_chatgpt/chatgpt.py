@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 import httpx
-from nonebot.exception import NetworkError
+from nonebot.log import logger
 from typing_extensions import Self
 
 from .config import config
@@ -71,8 +71,8 @@ class Chatbot:
                 timeout=config.chatgpt_timeout,
             )
         if "text/event-stream" not in response.headers.get("content-type"):
-            raise NetworkError(
-                f"Invalid response content: HTTP{response.status_code}, {response.text}"
+            logger.opt(colors=True).error(
+                f"Invalid response content: <r>HTTP{response.status_code}</r>, {response.text}"
             )
         lines = response.text.splitlines()
         if "detail" in lines[0]:
@@ -101,6 +101,6 @@ class Chatbot:
             self.session_token = response.cookies.get(SESSION_TOKEN, "")  # type: ignore
             self.authorization = response.json()["accessToken"]
         except Exception as e:
-            raise NetworkError(
-                f"Refresh session failed: HTTP{response.status_code}, {response.text}"
-            ) from e
+            logger.opt(colors=True, exception=e).error(
+                f"Refresh session failed: <r>HTTP{response.status_code}</r> {response.text}"
+            )
