@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Type, Union
 
 from nonebot import on_command, on_message, require
-from nonebot.adapters.onebot.v11 import MessageEvent
+from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.matcher import Matcher
 from nonebot.params import _command_arg
 from nonebot.rule import to_me
@@ -14,6 +14,10 @@ from .config import config
 require("nonebot_plugin_apscheduler")
 
 from nonebot_plugin_apscheduler import scheduler
+
+require("nonebot_plugin_htmlrender")
+
+from nonebot_plugin_htmlrender import md_to_pic
 
 chat_bot = Chatbot()
 
@@ -48,6 +52,9 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     text = message.extract_plain_text().strip()
     session_id = event.get_session_id()
     msg = await chat_bot(**session[session_id]).get_chat_response(text)
+    if config.chatgpt_image:
+        img = await md_to_pic(msg)
+        msg = MessageSegment.image(img)
     await matcher.send(msg, at_sender=True)
     session[session_id]["conversation_id"] = chat_bot.conversation_id
     session[session_id]["parent_id"] = chat_bot.parent_id
