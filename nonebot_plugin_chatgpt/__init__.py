@@ -40,6 +40,7 @@ def create_matcher(
 
 
 matcher = create_matcher(config.chatgpt_command, config.chatgpt_to_me)
+refresh_conversation = on_command("刷新对话", aliases={}, block=True, rule=to_me(), priority=1)
 
 
 @matcher.handle()
@@ -51,6 +52,14 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     await matcher.send(msg, at_sender=True)
     session[session_id]["conversation_id"] = chat_bot.conversation_id
     session[session_id]["parent_id"] = chat_bot.parent_id
+
+
+@refresh_conversation.handle()
+async def refresh(event: MessageEvent) -> None:
+    session_id = event.get_session_id()
+    session[session_id] = {}
+    chat_bot.reset_chat()
+    await refresh_conversation.send("当前会话已刷新")
 
 
 @scheduler.scheduled_job("interval", minutes=config.chatgpt_refresh_interval)
