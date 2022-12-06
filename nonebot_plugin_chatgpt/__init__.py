@@ -53,6 +53,17 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     session[session_id]["parent_id"] = chat_bot.parent_id
 
 
+refresh = on_command("刷新对话", aliases={"刷新会话"}, block=True, rule=to_me(), priority=1)
+
+
+@refresh.handle()
+async def refresh_conversation(event: MessageEvent) -> None:
+    session_id = event.get_session_id()
+    del session[session_id]
+    chat_bot.reset_chat()
+    await refresh.send("当前会话已刷新")
+
+
 @scheduler.scheduled_job("interval", minutes=config.chatgpt_refresh_interval)
 async def refresh_session() -> None:
     await chat_bot.refresh_session()
