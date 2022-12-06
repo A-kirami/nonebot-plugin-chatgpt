@@ -53,6 +53,9 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     session_id = event.get_session_id()
     msg = await chat_bot(**session[session_id]).get_chat_response(text)
     if config.chatgpt_image:
+        # 这个 AI 说话老说一半，暂时统计 ``` 数量让 MD 不至于格式错乱
+        if msg.count("```") % 2 != 0:
+            msg += "\n```"
         img = await md_to_pic(msg)
         msg = MessageSegment.image(img)
     await matcher.send(msg, at_sender=True)
