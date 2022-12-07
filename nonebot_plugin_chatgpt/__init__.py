@@ -3,11 +3,11 @@ from typing import Any, Dict, List, Type, Union
 
 from nonebot import on_command, on_message, require
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
+from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import _command_arg
 from nonebot.rule import to_me
 from nonebot.typing import T_State
-from nonebot.log import logger
 
 from .chatgpt import Chatbot
 from .config import config
@@ -50,16 +50,17 @@ matcher = create_matcher(config.chatgpt_command, config.chatgpt_to_me)
 
 @matcher.handle()
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
-    logger.debug("Start requesting AiChat.")
     message = _command_arg(state) or event.get_message()
     text = message.extract_plain_text().strip()
     session_id = event.get_session_id()
     try:
         msg = await chat_bot(**session[session_id]).get_chat_response(text)
-    except Exception as exarg:
-        msg = "请求GPTChat服务器时出现问题，请稍后再试\n错误信息: " +  type(exarg).__name__
-        logger.error("Request Failed! " + type(exarg).__name__)
-        logger.error(exarg.args)
+    except Exception as e:
+        error = f"{type(e).__name__}: {e}"
+        logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
+        await matcher.finish(
+            f"请求 ChatGPT 服务器时出现问题，请稍后再试\n错误信息: {error}", at_sender=True
+        )
     if config.chatgpt_image:
         if msg.count("```") % 2 != 0:
             msg += "\n```"
