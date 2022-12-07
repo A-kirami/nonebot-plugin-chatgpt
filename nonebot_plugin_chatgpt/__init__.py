@@ -21,7 +21,12 @@ if config.chatgpt_image:
 
     from nonebot_plugin_htmlrender import md_to_pic
 
-chat_bot = Chatbot()
+chat_bot = Chatbot(
+    token=config.chatgpt_session_token,
+    api=config.chatgpt_api,
+    proxies=config.chatgpt_proxies,
+    timeout=config.chatgpt_timeout,
+)
 
 session = defaultdict(dict)
 

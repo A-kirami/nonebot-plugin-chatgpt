@@ -6,8 +6,6 @@ import httpx
 from nonebot.log import logger
 from typing_extensions import Self
 
-from .config import config
-
 try:
     import ujson as json
 except ModuleNotFoundError:
@@ -17,8 +15,18 @@ SESSION_TOKEN_KEY = "__Secure-next-auth.session-token"
 
 
 class Chatbot:
-    def __init__(self) -> None:
-        self.session_token = config.chatgpt_session_token
+    def __init__(
+        self,
+        *,
+        token: str = "",
+        api: str = "https://chat.openai.com/",
+        proxies: str | None = None,
+        timeout: int = 10,
+    ) -> None:
+        self.session_token = token
+        self.api_url = api
+        self.proxies = proxies
+        self.timeout = timeout
         self.authorization = None
 
     def __call__(
@@ -59,12 +67,12 @@ class Chatbot:
     async def get_chat_response(self, prompt: str) -> str:
         if not self.authorization:
             await self.refresh_session()
-        async with httpx.AsyncClient(proxies=config.chatgpt_proxies) as client:  # type: ignore
+        async with httpx.AsyncClient(proxies=self.proxies) as client:
             response = await client.post(
-                urljoin(config.chatgpt_api, "backend-api/conversation"),
+                urljoin(self.api_url, "backend-api/conversation"),
                 headers=self.headers,
                 json=self.get_payload(prompt),
-                timeout=config.chatgpt_timeout,
+                timeout=self.timeout,
             )
         if response.status_code == 429:
             return "请求过多，请放慢速度"
@@ -83,17 +91,19 @@ class Chatbot:
         cookies = {SESSION_TOKEN_KEY: self.session_token}
         async with httpx.AsyncClient(
             cookies=cookies,
-            proxies=config.chatgpt_proxies,  # type: ignore
-            timeout=config.chatgpt_timeout,
+            proxies=self.proxies,
+            timeout=self.timeout,
         ) as client:
             response = await client.get(
-                urljoin(config.chatgpt_api, "api/auth/session"),
+                urljoin(self.api_url, "api/auth/session"),
                 headers={
                     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
                 },
             )
         try:
-            self.session_token = response.cookies.get(SESSION_TOKEN_KEY, "")  # type: ignore
+            self.session_token = (
+                response.cookies.get(SESSION_TOKEN_KEY) or self.session_token
+            )
             self.authorization = response.json()["accessToken"]
         except Exception as e:
             logger.opt(colors=True, exception=e).error(
