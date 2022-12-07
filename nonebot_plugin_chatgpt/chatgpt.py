@@ -23,7 +23,7 @@ class Chatbot:
         account: str = "",
         password: str = "",
         api: str = "https://chat.openai.com/",
-        proxies: str | None = None,
+        proxies: Optional[str] = None,
         timeout: int = 10,
     ) -> None:
         self.session_token = token
