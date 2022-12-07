@@ -73,7 +73,9 @@ _✨ ChatGPT AI 对话 ✨_
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
-| CHATGPT_SESSION_TOKEN | 是 | 无 | ChatGPT 的 session_token |
+| CHATGPT_SESSION_TOKEN | 否 | 空字符串 | ChatGPT 的 session_token，如配置则优先使用 |
+| CHATGPT_ACCOUNT | 否 | 空字符串 | ChatGPT 登陆邮箱，未配置则使用 session_token |
+| CHATGPT_PASSWORD | 否 | 空字符串 | ChatGPT 登陆密码，未配置则使用 session_token |
 | CHATGPT_PROXIES | 否 | None | 代理地址，格式为： `http://ip:port` |
 | CHATGPT_REFRESH_INTERVAL | 否 | 30 | session_token 自动刷新间隔，单位：分钟 |
 | CHATGPT_COMMAND | 否 | 空字符串 | 触发聊天的命令，可以是 `字符串` 或者 `字符串列表`。<br>如果为空字符串或者空列表，则默认响应全部消息  |

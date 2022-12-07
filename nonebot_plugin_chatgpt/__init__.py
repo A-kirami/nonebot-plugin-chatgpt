@@ -23,6 +23,8 @@ if config.chatgpt_image:
 
 chat_bot = Chatbot(
     token=config.chatgpt_session_token,
+    account=config.chatgpt_account,
+    password=config.chatgpt_password,
     api=config.chatgpt_api,
     proxies=config.chatgpt_proxies,
     timeout=config.chatgpt_timeout,
