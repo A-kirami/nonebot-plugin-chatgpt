@@ -7,6 +7,7 @@ from nonebot.matcher import Matcher
 from nonebot.params import _command_arg
 from nonebot.rule import to_me
 from nonebot.typing import T_State
+from nonebot.log import logger
 
 from .chatgpt import Chatbot
 from .config import config
@@ -48,10 +49,16 @@ matcher = create_matcher(config.chatgpt_command, config.chatgpt_to_me)
 
 @matcher.handle()
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
+    logger.debug("Start requesting AiChat.")
     message = _command_arg(state) or event.get_message()
     text = message.extract_plain_text().strip()
     session_id = event.get_session_id()
-    msg = await chat_bot(**session[session_id]).get_chat_response(text)
+    try:
+        msg = await chat_bot(**session[session_id]).get_chat_response(text)
+    except Exception as exarg:
+        msg = "请求GPTChat服务器时出现问题，请稍后再试\n错误信息: " +  type(exarg).__name__
+        logger.error("Request Failed! " + type(exarg).__name__)
+        logger.error(exarg.args)
     if config.chatgpt_image:
         # 这个 AI 说话老说一半，暂时统计 ``` 数量让 MD 不至于格式错乱
         if msg.count("```") % 2 != 0:
