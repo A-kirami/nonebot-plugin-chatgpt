@@ -13,7 +13,7 @@ try:
 except ModuleNotFoundError:
     import json
 
-SESSION_TOKEN = "__Secure-next-auth.session-token"
+SESSION_TOKEN_KEY = "__Secure-next-auth.session-token"
 
 
 class Chatbot:
@@ -80,7 +80,7 @@ class Chatbot:
         return response["message"]["content"]["parts"][0]
 
     async def refresh_session(self) -> None:
-        cookies = {SESSION_TOKEN: self.session_token}
+        cookies = {SESSION_TOKEN_KEY: self.session_token}
         async with httpx.AsyncClient(
             cookies=cookies,
             proxies=config.chatgpt_proxies,  # type: ignore
@@ -93,7 +93,7 @@ class Chatbot:
                 },
             )
         try:
-            self.session_token = response.cookies.get(SESSION_TOKEN, "")  # type: ignore
+            self.session_token = response.cookies.get(SESSION_TOKEN_KEY, "")  # type: ignore
             self.authorization = response.json()["accessToken"]
         except Exception as e:
             logger.opt(colors=True, exception=e).error(
