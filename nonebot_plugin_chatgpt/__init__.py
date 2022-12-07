@@ -58,7 +58,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         msg = await chat_bot(**session[session_id]).get_chat_response(text)
     except Exception as exarg:
         msg = "请求GPTChat服务器时出现问题，请稍后再试\n错误信息: " +  type(exarg).__name__
-        logger.error("Request Failed! " + type(exarg).__name__)
+        logger.error(f"Request Failed! {type(exarg).__name__}")
         logger.error(exarg.args)
     if config.chatgpt_image:
         if msg.count("```") % 2 != 0:
