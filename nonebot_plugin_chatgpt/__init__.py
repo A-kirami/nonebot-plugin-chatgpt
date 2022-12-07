@@ -16,9 +16,10 @@ require("nonebot_plugin_apscheduler")
 
 from nonebot_plugin_apscheduler import scheduler
 
-require("nonebot_plugin_htmlrender")
+if config.chatgpt_image:
+    require("nonebot_plugin_htmlrender")
 
-from nonebot_plugin_htmlrender import md_to_pic
+    from nonebot_plugin_htmlrender import md_to_pic
 
 chat_bot = Chatbot()
 
@@ -60,7 +61,6 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         logger.error("Request Failed! " + type(exarg).__name__)
         logger.error(exarg.args)
     if config.chatgpt_image:
-        # 这个 AI 说话老说一半，暂时统计 ``` 数量让 MD 不至于格式错乱
         if msg.count("```") % 2 != 0:
             msg += "\n```"
         img = await md_to_pic(msg)
