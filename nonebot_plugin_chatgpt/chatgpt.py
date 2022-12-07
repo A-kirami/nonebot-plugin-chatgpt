@@ -97,6 +97,7 @@ class Chatbot:
             logger.opt(colors=True).error(
                 f"非预期的响应内容: <r>HTTP{response.status_code}</r> {response.text}"
             )
+            return f"ChatGPT 服务器返回了非预期的内容: HTTP{response.status_code}\n{response.text}"
         lines = response.text.splitlines()
         data = lines[-4][6:]
         response = json.loads(data)
