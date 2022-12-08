@@ -36,7 +36,7 @@ session = defaultdict(dict)
 def create_matcher(
     command: Union[str, List[str]], only_to_me: bool = True
 ) -> Type[Matcher]:
-    params: Dict[str, Any] = {"priority": 999}
+    params: Dict[str, Any] = {"priority": config.chatgpt_priority, "block": config.chatgpt_block}
 
     if command:
         on_matcher = on_command

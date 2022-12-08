@@ -83,6 +83,8 @@ _✨ ChatGPT AI 对话 ✨_
 | CHATGPT_TIMEOUT | 否 | 10 | 请求的超时时间，单位：秒 |
 | CHATGPT_API | 否 | https://chat.openai.com/ | API 地址，可配置反代 |
 | CHATGPT_IMAGE | 否 | False | 是否以图片形式发送。<br>如果启动时出现 `NotImplementedError` 错误，请在 `.env.dev` 中将 `fastapi_reload` 设置为 `False`<br>如果无法显示文字，请[点击此处](https://github.com/kexue-z/nonebot-plugin-htmlrender#%E5%B8%B8%E8%A7%81%E7%96%91%E9%9A%BE%E6%9D%82%E7%97%87)查看解决办法 |
+| CHATGPT_PRIORITY | 否 | 999 | 事件响应器优先级 |
+| CHATGPT_BLOCK | 否 | True | 是否阻断消息传播 |
 
 ### 获取 session_token
 

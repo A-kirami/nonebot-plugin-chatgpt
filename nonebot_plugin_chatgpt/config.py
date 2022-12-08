@@ -15,6 +15,8 @@ class Config(BaseModel, extra=Extra.ignore):
     chatgpt_timeout: int = 10
     chatgpt_api: str = "https://chat.openai.com/"
     chatgpt_image: bool = False
+    chatgpt_priority: int = 999
+    chatgpt_block: bool = True
 
 
 config = Config.parse_obj(get_driver().config)
