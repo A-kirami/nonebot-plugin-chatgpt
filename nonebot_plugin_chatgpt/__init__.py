@@ -88,7 +88,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     if config.chatgpt_image:
         if msg.count("```") % 2 != 0:
             msg += "\n```"
-        img = await md_to_pic(msg)
+        img = await md_to_pic(msg, width=config.chatgpt_image_width)
         msg = MessageSegment.image(img)
     await matcher.send(msg, at_sender=True)
     session[session_id]["conversation_id"] = chat_bot.conversation_id
