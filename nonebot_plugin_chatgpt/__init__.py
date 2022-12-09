@@ -11,7 +11,6 @@ from nonebot.typing import T_State
 
 from .chatgpt import Chatbot
 from .config import config
-from .json_manager import read_json, write_json
 
 require("nonebot_plugin_apscheduler")
 
@@ -32,7 +31,14 @@ chat_bot = Chatbot(
 )
 
 session = defaultdict(dict)
+cd_time = config.chatgpt_cd_time
 
+
+
+check_cd_time = {}
+def user_time(qid:str, time:int, mid:int):
+    global check_cd_time
+    check_cd_time[qid] = [time, mid]
 
 def create_matcher(
     command: Union[str, List[str]], only_to_me: bool = True
@@ -55,19 +61,23 @@ def create_matcher(
 
 matcher = create_matcher(config.chatgpt_command, config.chatgpt_to_me)
 
-
 @matcher.handle()
-async def ai_chat(event: MessageEvent, state: T_State) -> None:
+async def update_user_time(event: MessageEvent):
+    global qid
     qid = event.get_user_id()
-    data = read_json()
+    data = check_cd_time
+    global mid
     mid = event.message_id
     try:
+        global cd
         cd = event.time - data[qid][0]
     except Exception:
         cd = cd_time + 1
-        
+
+@matcher.handle()
+async def ai_chat(event: MessageEvent, state: T_State) -> None:
     if(cd > cd_time):
-        write_json(qid, event.time, mid, data)
+        user_time(qid, event.time, mid)
     
         message = _command_arg(state) or event.get_message()
         text = message.extract_plain_text().strip()
