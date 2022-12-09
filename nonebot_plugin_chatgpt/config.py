@@ -5,10 +5,10 @@ from pydantic import BaseModel, Extra
 
 
 class Config(BaseModel, extra=Extra.ignore):
-    chatgpt_cd_time: int = 120
     chatgpt_session_token: str = ""
     chatgpt_account: str = ""
     chatgpt_password: str = ""
+    chatgpt_cd_time: int = 120
     chatgpt_proxies: Optional[str] = None
     chatgpt_refresh_interval: int = 30
     chatgpt_command: Union[str, List[str]] = ""
