@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 import httpx
 from nonebot.log import logger
+from nonebot.utils import run_sync
 from OpenAIAuth.OpenAIAuth import OpenAIAuth
 from typing_extensions import Self
 
@@ -107,7 +108,7 @@ class Chatbot:
 
     async def refresh_session(self) -> None:
         if self.auto_auth:
-            self.login()
+            await self.login()
         else:
             cookies = {SESSION_TOKEN_KEY: self.session_token}
             async with httpx.AsyncClient(
@@ -131,6 +132,7 @@ class Chatbot:
                     f"刷新会话失败: <r>HTTP{response.status_code}</r> {response.text}"
                 )
 
+    @run_sync
     def login(self) -> None:
         auth = OpenAIAuth(self.account, self.password, bool(self.proxies), self.proxies)  # type: ignore
         try:
