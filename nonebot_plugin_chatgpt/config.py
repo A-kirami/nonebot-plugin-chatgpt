@@ -5,7 +5,7 @@ from pydantic import BaseModel, Extra
 
 
 class Config(BaseModel, extra=Extra.ignore):
-    chatgpt_cd_time: int = 180
+    chatgpt_cd_time: int = 120
     chatgpt_session_token: str = ""
     chatgpt_account: str = ""
     chatgpt_password: str = ""
