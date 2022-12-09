@@ -2,10 +2,10 @@ from collections import defaultdict
 from typing import Any, AsyncGenerator, Dict, List, Type, Union
 
 from nonebot import on_command, on_message, require
-from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
 from nonebot.log import logger
 from nonebot.matcher import Matcher
-from nonebot.params import Depends, _command_arg
+from nonebot.params import CommandArg, Depends, _command_arg
 from nonebot.rule import to_me
 from nonebot.typing import T_State
 
@@ -103,6 +103,41 @@ async def refresh_conversation(event: MessageEvent) -> None:
     session_id = event.get_session_id()
     del session[session_id]
     await refresh.send("当前会话已刷新")
+
+
+export = on_command("导出对话", aliases={"导出会话"}, block=True, rule=to_me(), priority=1)
+
+
+@export.handle()
+async def export_conversation(event: MessageEvent) -> None:
+    session_id = event.get_session_id()
+    cvst = session[session_id]
+    if not cvst:
+        await export.finish("你还没有任何会话记录", at_sender=True)
+    await export.send(
+        f"已成功导出会话:\n"
+        f"会话ID: {cvst['conversation_id']}\n"
+        f"父消息ID: {cvst['parent_id']}",
+        at_sender=True,
+    )
+
+
+import_ = on_command(
+    "导入对话", aliases={"导入会话", "加载对话", "加载会话"}, block=True, rule=to_me(), priority=1
+)
+
+
+@import_.handle()
+async def import_conversation(event: MessageEvent, arg: Message = CommandArg()) -> None:
+    args = arg.extract_plain_text().strip().split()
+    if not args:
+        await import_.finish("至少需要提供会话ID", at_sender=True)
+    if len(args) > 2:
+        await import_.finish("提供的参数格式不正确", at_sender=True)
+    session_id = event.get_session_id()
+    session[session_id]["conversation_id"] = args.pop(0)
+    session[session_id]["parent_id"] = args[0] if args else None
+    await import_.send("已成功导入会话", at_sender=True)
 
 
 @scheduler.scheduled_job("interval", minutes=config.chatgpt_refresh_interval)
