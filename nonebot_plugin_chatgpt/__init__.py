@@ -76,9 +76,9 @@ async def update_user_time(event: MessageEvent):
 
 @matcher.handle()
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
-    if(cd > cd_time):
+    if (cd > cd_time):
         user_time(qid, event.time, mid)
-    
+
         message = _command_arg(state) or event.get_message()
         text = message.extract_plain_text().strip()
         session_id = event.get_session_id()
@@ -98,7 +98,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         await matcher.send(msg, at_sender=True)
         session[session_id]["conversation_id"] = chat_bot.conversation_id
         session[session_id]["parent_id"] = chat_bot.parent_id
-    
+
     else:
         time_last = cd_time - cd
         hours, minutes, seconds = 0, 0, 0
@@ -107,7 +107,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
             hours, minutes = divmod(minutes, 60)
         else:
             seconds = time_last
-        cd_msg = f"{str(hours) + '小时' if hours else ''}{str(minutes) + '分钟' if minutes else ''}{str(seconds) + '秒' if seconds else ''}"
+        cd_msg = f"{f'{str(hours)}小时' if hours else ''}{f'{str(minutes)}分钟' if minutes else ''}{f'{str(seconds)}秒' if seconds else ''}"
 
         await matcher.send(f"ChatGPT冷却时间剩余{cd_msg}", at_sender=True)
 
