@@ -1,11 +1,11 @@
 from collections import defaultdict
-from typing import Any, Dict, List, Type, Union
+from typing import Any, AsyncGenerator, Dict, List, Type, Union
 
 from nonebot import on_command, on_message, require
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.log import logger
 from nonebot.matcher import Matcher
-from nonebot.params import _command_arg
+from nonebot.params import Depends, _command_arg
 from nonebot.rule import to_me
 from nonebot.typing import T_State
 
@@ -32,11 +32,28 @@ chat_bot = Chatbot(
 
 session = defaultdict(dict)
 
+cooldown = defaultdict(int)
+
+
+async def check_cooldown(
+    matcher: Matcher, event: MessageEvent
+) -> AsyncGenerator[None, None]:
+    cooldown_time = cooldown[event.user_id] + config.chatgpt_cd_time
+    if event.time < cooldown_time:
+        await matcher.finish(
+            f"ChatGPT 冷却中，剩余 {cooldown_time - event.time} 秒", at_sender=True
+        )
+    yield
+    cooldown[event.user_id] = event.time
+
 
 def create_matcher(
     command: Union[str, List[str]], only_to_me: bool = True
 ) -> Type[Matcher]:
-    params: Dict[str, Any] = {"priority": config.chatgpt_priority, "block": config.chatgpt_block}
+    params: Dict[str, Any] = {
+        "priority": config.chatgpt_priority,
+        "block": config.chatgpt_block,
+    }
 
     if command:
         on_matcher = on_command
@@ -55,7 +72,7 @@ def create_matcher(
 matcher = create_matcher(config.chatgpt_command, config.chatgpt_to_me)
 
 
-@matcher.handle()
+@matcher.handle(parameterless=[Depends(check_cooldown)])
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
     message = _command_arg(state) or event.get_message()
     text = message.extract_plain_text().strip()
