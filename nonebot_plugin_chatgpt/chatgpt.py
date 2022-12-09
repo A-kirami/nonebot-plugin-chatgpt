@@ -136,7 +136,7 @@ class Chatbot:
         try:
             auth.begin()
         except Exception as e:
-            if e == "Captcha detected":
+            if str(e) == "Captcha detected":
                 logger.error("不支持验证码, 请使用 session token")
             raise e
         if not auth.access_token:
