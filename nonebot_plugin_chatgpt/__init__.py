@@ -1,11 +1,11 @@
 from collections import defaultdict
-from typing import Any, Dict, List, Type, Union
+from typing import Any, AsyncGenerator, Dict, List, Type, Union
 
 from nonebot import on_command, on_message, require
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.log import logger
 from nonebot.matcher import Matcher
-from nonebot.params import _command_arg
+from nonebot.params import Depends, _command_arg
 from nonebot.rule import to_me
 from nonebot.typing import T_State
 
@@ -31,19 +31,29 @@ chat_bot = Chatbot(
 )
 
 session = defaultdict(dict)
-cd_time = config.chatgpt_cd_time
+
+cooldown = defaultdict(int)
 
 
+async def check_cooldown(
+    matcher: Matcher, event: MessageEvent
+) -> AsyncGenerator[None, None]:
+    cooldown_time = cooldown[event.user_id] + config.chatgpt_cd_time
+    if event.time < cooldown_time:
+        await matcher.finish(
+            f"ChatGPT 冷却中，剩余 {cooldown_time - event.time} 秒", at_sender=True
+        )
+    yield
+    cooldown[event.user_id] = event.time
 
-check_cd_time = {}
-def user_time(qid:str, time:int, mid:int):
-    global check_cd_time
-    check_cd_time[qid] = [time, mid]
 
 def create_matcher(
     command: Union[str, List[str]], only_to_me: bool = True
 ) -> Type[Matcher]:
-    params: Dict[str, Any] = {"priority": config.chatgpt_priority, "block": config.chatgpt_block}
+    params: Dict[str, Any] = {
+        "priority": config.chatgpt_priority,
+        "block": config.chatgpt_block,
+    }
 
     if command:
         on_matcher = on_command
@@ -61,55 +71,29 @@ def create_matcher(
 
 matcher = create_matcher(config.chatgpt_command, config.chatgpt_to_me)
 
-@matcher.handle()
-async def update_user_time(event: MessageEvent):
-    global qid
-    qid = event.get_user_id()
-    data = check_cd_time
-    global mid
-    mid = event.message_id
-    try:
-        global cd
-        cd = event.time - data[qid][0]
-    except Exception:
-        cd = cd_time + 1
 
-@matcher.handle()
+@matcher.handle(parameterless=[Depends(check_cooldown)])
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
-    if(cd > cd_time):
-        user_time(qid, event.time, mid)
-    
-        message = _command_arg(state) or event.get_message()
-        text = message.extract_plain_text().strip()
-        session_id = event.get_session_id()
-        try:
-            msg = await chat_bot(**session[session_id]).get_chat_response(text)
-        except Exception as e:
-            error = f"{type(e).__name__}: {e}"
-            logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
-            await matcher.finish(
-                f"请求 ChatGPT 服务器时出现问题，请稍后再试\n错误信息: {error}", at_sender=True
-            )
-        if config.chatgpt_image:
-            if msg.count("```") % 2 != 0:
-                msg += "\n```"
-            img = await md_to_pic(msg)
-            msg = MessageSegment.image(img)
-        await matcher.send(msg, at_sender=True)
-        session[session_id]["conversation_id"] = chat_bot.conversation_id
-        session[session_id]["parent_id"] = chat_bot.parent_id
-    
-    else:
-        time_last = cd_time - cd
-        hours, minutes, seconds = 0, 0, 0
-        if time_last >= 60:
-            minutes, seconds = divmod(time_last, 60)
-            hours, minutes = divmod(minutes, 60)
-        else:
-            seconds = time_last
-        cd_msg = f"{str(hours) + '小时' if hours else ''}{str(minutes) + '分钟' if minutes else ''}{str(seconds) + '秒' if seconds else ''}"
+    message = _command_arg(state) or event.get_message()
+    text = message.extract_plain_text().strip()
+    session_id = event.get_session_id()
+    try:
+        msg = await chat_bot(**session[session_id]).get_chat_response(text)
+    except Exception as e:
+        error = f"{type(e).__name__}: {e}"
+        logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
+        await matcher.finish(
+            f"请求 ChatGPT 服务器时出现问题，请稍后再试\n错误信息: {error}", at_sender=True
+        )
+    if config.chatgpt_image:
+        if msg.count("```") % 2 != 0:
+            msg += "\n```"
+        img = await md_to_pic(msg)
+        msg = MessageSegment.image(img)
+    await matcher.send(msg, at_sender=True)
+    session[session_id]["conversation_id"] = chat_bot.conversation_id
+    session[session_id]["parent_id"] = chat_bot.parent_id
 
-        await matcher.send(f"ChatGPT冷却时间剩余{cd_msg}", at_sender=True)
 
 refresh = on_command("刷新对话", aliases={"刷新会话"}, block=True, rule=to_me(), priority=1)
 
