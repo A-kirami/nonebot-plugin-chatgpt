@@ -11,7 +11,7 @@ from nonebot.typing import T_State
 
 from .chatgpt import Chatbot
 from .config import config
-from .json_manager import *
+from .json_manager import read_json, write_json
 
 require("nonebot_plugin_apscheduler")
 
