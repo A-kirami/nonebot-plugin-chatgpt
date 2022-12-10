@@ -19,6 +19,7 @@ class Config(BaseModel, extra=Extra.ignore):
     chatgpt_image_width: int = 500
     chatgpt_priority: int = 999
     chatgpt_block: bool = True
+    chatgpt_private: bool = True
 
 
 config = Config.parse_obj(get_driver().config)

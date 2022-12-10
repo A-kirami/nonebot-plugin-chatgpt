@@ -87,6 +87,7 @@ _✨ ChatGPT AI 对话 ✨_
 | CHATGPT_IMAGE_WIDTH | 否 | 500 | 消息图片宽度，单位：像素 |
 | CHATGPT_PRIORITY | 否 | 999 | 事件响应器优先级 |
 | CHATGPT_BLOCK | 否 | True | 是否阻断消息传播 |
+| CHATGPT_PRIVATE | 否 | True | 是否允许私聊使用 |
 
 ### 获取 session_token
 
