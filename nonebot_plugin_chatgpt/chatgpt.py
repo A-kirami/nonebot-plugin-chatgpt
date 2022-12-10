@@ -5,7 +5,6 @@ from urllib.parse import urljoin
 import httpx
 from nonebot.log import logger
 from nonebot.utils import run_sync
-from OpenAIAuth.OpenAIAuth import OpenAIAuth
 from typing_extensions import Self
 
 try:
@@ -134,6 +133,7 @@ class Chatbot:
 
     @run_sync
     def login(self) -> None:
+        from OpenAIAuth.OpenAIAuth import OpenAIAuth
         auth = OpenAIAuth(self.account, self.password, bool(self.proxies), self.proxies)  # type: ignore
         try:
             auth.begin()
