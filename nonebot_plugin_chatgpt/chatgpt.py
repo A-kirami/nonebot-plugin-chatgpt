@@ -27,6 +27,8 @@ class Chatbot:
         timeout: int = 10,
     ) -> None:
         self.session_token = token
+        self.account = account
+        self.password = password
         self.api_url = api
         self.proxies = proxies
         self.timeout = timeout
@@ -34,8 +36,10 @@ class Chatbot:
 
         if self.session_token:
             self.auto_auth = False
+        elif self.account and self.password:
+            self.auto_auth = True
         else:
-            raise ValueError("必须配置 session_token")
+            raise ValueError("至少需要配置 session_token 或者 account 和 password")
 
     def __call__(
         self, conversation_id: Optional[str] = None, parent_id: Optional[str] = None
@@ -102,20 +106,6 @@ class Chatbot:
         return response["message"]["content"]["parts"][0]
 
     async def refresh_session(self) -> None:
-<<<<<<< Updated upstream
-        cookies = {SESSION_TOKEN_KEY: self.session_token}
-        async with httpx.AsyncClient(
-            cookies=cookies,
-            proxies=self.proxies,
-            timeout=self.timeout,
-        ) as client:
-            response = await client.get(
-                urljoin(self.api_url, "api/auth/session"),
-                headers={
-                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
-                },
-            )
-=======
         if self.auto_auth:
             await self.login()
         else:
@@ -145,13 +135,24 @@ class Chatbot:
     def login(self) -> None:
         from OpenAIAuth.OpenAIAuth import OpenAIAuth
         auth = OpenAIAuth(self.account, self.password, bool(self.proxies), self.proxies)  # type: ignore
->>>>>>> Stashed changes
         try:
-            self.session_token = (
-                response.cookies.get(SESSION_TOKEN_KEY) or self.session_token
-            )
-            self.authorization = response.json()["accessToken"]
+            auth.begin()
         except Exception as e:
-            logger.opt(colors=True, exception=e).error(
-                f"刷新会话失败: <r>HTTP{response.status_code}</r> {response.text}"
-            )
+            if str(e) == "Captcha detected":
+                logger.error("不支持验证码, 请使用 session token")
+            raise e
+        if not auth.access_token:
+            logger.error("ChatGPT 登陆错误!")
+        self.authorization = auth.access_token
+        if auth.session_token:
+            self.session_token = auth.session_token
+        elif possible_tokens := auth.session.cookies.get(SESSION_TOKEN_KEY):
+            if len(possible_tokens) > 1:
+                self.session_token = possible_tokens[0]
+            else:
+                try:
+                    self.session_token = possible_tokens
+                except Exception as e:
+                    logger.opt(exception=e).error("ChatGPT 登陆错误!")
+        else:
+            logger.error("ChatGPT 登陆错误!")
