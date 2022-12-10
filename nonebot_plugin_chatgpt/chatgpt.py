@@ -102,6 +102,7 @@ class Chatbot:
         return response["message"]["content"]["parts"][0]
 
     async def refresh_session(self) -> None:
+<<<<<<< Updated upstream
         cookies = {SESSION_TOKEN_KEY: self.session_token}
         async with httpx.AsyncClient(
             cookies=cookies,
@@ -114,6 +115,37 @@ class Chatbot:
                     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
                 },
             )
+=======
+        if self.auto_auth:
+            await self.login()
+        else:
+            cookies = {SESSION_TOKEN_KEY: self.session_token}
+            async with httpx.AsyncClient(
+                cookies=cookies,
+                proxies=self.proxies,
+                timeout=self.timeout,
+            ) as client:
+                response = await client.get(
+                    urljoin(self.api_url, "api/auth/session"),
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+                    },
+                )
+            try:
+                self.session_token = (
+                    response.cookies.get(SESSION_TOKEN_KEY) or self.session_token
+                )
+                self.authorization = response.json()["accessToken"]
+            except Exception as e:
+                logger.opt(colors=True, exception=e).error(
+                    f"刷新会话失败: <r>HTTP{response.status_code}</r> {response.text}"
+                )
+
+    @run_sync
+    def login(self) -> None:
+        from OpenAIAuth.OpenAIAuth import OpenAIAuth
+        auth = OpenAIAuth(self.account, self.password, bool(self.proxies), self.proxies)  # type: ignore
+>>>>>>> Stashed changes
         try:
             self.session_token = (
                 response.cookies.get(SESSION_TOKEN_KEY) or self.session_token
