@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Any, AsyncGenerator, Dict, List, Type, Union
 
 from nonebot import on_command, on_message, require
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import GROUP, Message, MessageEvent, MessageSegment
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, Depends, _command_arg
@@ -48,7 +48,7 @@ async def check_cooldown(
 
 
 def create_matcher(
-    command: Union[str, List[str]], only_to_me: bool = True
+    command: Union[str, List[str]], only_to_me: bool = True, private: bool = True
 ) -> Type[Matcher]:
     params: Dict[str, Any] = {
         "priority": config.chatgpt_priority,
@@ -65,11 +65,15 @@ def create_matcher(
 
     if only_to_me:
         params["rule"] = to_me()
+    if not private:
+        params["permission"] = GROUP
 
     return on_matcher(**params)
 
 
-matcher = create_matcher(config.chatgpt_command, config.chatgpt_to_me)
+matcher = create_matcher(
+    config.chatgpt_command, config.chatgpt_to_me, config.chatgpt_private
+)
 
 
 @matcher.handle(parameterless=[Depends(check_cooldown)])
