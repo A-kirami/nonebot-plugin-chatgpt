@@ -81,7 +81,7 @@ _✨ ChatGPT AI 对话 ✨_
 | CHATGPT_REFRESH_INTERVAL | 否 | 30 | session_token 自动刷新间隔，单位：分钟 |
 | CHATGPT_COMMAND | 否 | 空字符串 | 触发聊天的命令，可以是 `字符串` 或者 `字符串列表`。<br>如果为空字符串或者空列表，则默认响应全部消息  |
 | CHATGPT_TO_ME | 否 | True | 是否需要@机器人 |
-| CHATGPT_TIMEOUT | 否 | 10 | 请求的超时时间，单位：秒 |
+| CHATGPT_TIMEOUT | 否 | 30 | 请求服务器的超时时间，单位：秒 |
 | CHATGPT_API | 否 | https://chat.openai.com/ | API 地址，可配置反代 |
 | CHATGPT_IMAGE | 否 | False | 是否以图片形式发送。<br>如果启动时出现 `NotImplementedError` 错误，请在 `.env.dev` 中将 `fastapi_reload` 设置为 `False`<br>如果无法显示文字，请[点击此处](https://github.com/kexue-z/nonebot-plugin-htmlrender#%E5%B8%B8%E8%A7%81%E7%96%91%E9%9A%BE%E6%9D%82%E7%97%87)查看解决办法 |
 | CHATGPT_IMAGE_WIDTH | 否 | 500 | 消息图片宽度，单位：像素 |
