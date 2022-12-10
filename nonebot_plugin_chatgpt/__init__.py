@@ -1,19 +1,20 @@
-from nonebot_plugin_apscheduler import scheduler
 from collections import defaultdict
 from typing import Any, AsyncGenerator, Dict, List, Type, Union
 
 from nonebot import on_command, on_message, require
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment, GROUP
+from nonebot.adapters.onebot.v11 import GROUP, Message, MessageEvent, MessageSegment
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, Depends, _command_arg
 from nonebot.rule import to_me
 from nonebot.typing import T_State
+
 from .chatgpt import Chatbot
 from .config import config
 
 require("nonebot_plugin_apscheduler")
 
+from nonebot_plugin_apscheduler import scheduler
 
 if config.chatgpt_image:
     require("nonebot_plugin_htmlrender")
@@ -65,13 +66,14 @@ def create_matcher(
     if only_to_me:
         params["rule"] = to_me()
     if not private:
-        params['permission'] = GROUP
+        params["permission"] = GROUP
 
     return on_matcher(**params)
 
 
-matcher = create_matcher(config.chatgpt_command,
-                         config.chatgpt_to_me, config.chatgpt_private)
+matcher = create_matcher(
+    config.chatgpt_command, config.chatgpt_to_me, config.chatgpt_private
+)
 
 
 @matcher.handle(parameterless=[Depends(check_cooldown)])
@@ -97,8 +99,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     session[session_id]["parent_id"] = chat_bot.parent_id
 
 
-refresh = on_command(
-    "刷新对话", aliases={"刷新会话"}, block=True, rule=to_me(), priority=1)
+refresh = on_command("刷新对话", aliases={"刷新会话"}, block=True, rule=to_me(), priority=1)
 
 
 @refresh.handle()
@@ -108,8 +109,7 @@ async def refresh_conversation(event: MessageEvent) -> None:
     await refresh.send("当前会话已刷新")
 
 
-export = on_command("导出对话", aliases={"导出会话"},
-                    block=True, rule=to_me(), priority=1)
+export = on_command("导出对话", aliases={"导出会话"}, block=True, rule=to_me(), priority=1)
 
 
 @export.handle()
