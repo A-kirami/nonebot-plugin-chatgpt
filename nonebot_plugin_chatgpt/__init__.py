@@ -1,16 +1,13 @@
-from collections import defaultdict
-from typing import Any, AsyncGenerator, Dict, List, Type, Union
-
-from nonebot import on_command, on_message, require
-from nonebot.adapters.onebot.v11 import GROUP, Message, MessageEvent, MessageSegment
+from nonebot import on_command, require
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
 from nonebot.log import logger
-from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, Depends, _command_arg
+from nonebot.params import CommandArg, _command_arg
 from nonebot.rule import to_me
 from nonebot.typing import T_State
 
 from .chatgpt import Chatbot
 from .config import config
+from .utils import Session, cooldow_checker, create_matcher
 
 require("nonebot_plugin_apscheduler")
 
@@ -30,59 +27,23 @@ chat_bot = Chatbot(
     timeout=config.chatgpt_timeout,
 )
 
-session = defaultdict(dict)
-
-cooldown = defaultdict(int)
-
-
-async def check_cooldown(
-    matcher: Matcher, event: MessageEvent
-) -> AsyncGenerator[None, None]:
-    cooldown_time = cooldown[event.user_id] + config.chatgpt_cd_time
-    if event.time < cooldown_time:
-        await matcher.finish(
-            f"ChatGPT 冷却中，剩余 {cooldown_time - event.time} 秒", at_sender=True
-        )
-    yield
-    cooldown[event.user_id] = event.time
-
-
-def create_matcher(
-    command: Union[str, List[str]], only_to_me: bool = True, private: bool = True
-) -> Type[Matcher]:
-    params: Dict[str, Any] = {
-        "priority": config.chatgpt_priority,
-        "block": config.chatgpt_block,
-    }
-
-    if command:
-        on_matcher = on_command
-        command = [command] if isinstance(command, str) else command
-        params["cmd"] = command.pop(0)
-        params["aliases"] = set(command)
-    else:
-        on_matcher = on_message
-
-    if only_to_me:
-        params["rule"] = to_me()
-    if not private:
-        params["permission"] = GROUP
-
-    return on_matcher(**params)
-
-
 matcher = create_matcher(
-    config.chatgpt_command, config.chatgpt_to_me, config.chatgpt_private
+    config.chatgpt_command,
+    config.chatgpt_to_me,
+    config.chatgpt_private,
+    config.chatgpt_priority,
+    config.chatgpt_block,
 )
 
+session = Session()
 
-@matcher.handle(parameterless=[Depends(check_cooldown)])
+
+@matcher.handle(parameterless=[cooldow_checker(config.chatgpt_cd_time)])
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
     message = _command_arg(state) or event.get_message()
     text = message.extract_plain_text().strip()
-    session_id = event.get_session_id()
     try:
-        msg = await chat_bot(**session[session_id]).get_chat_response(text)
+        msg = await chat_bot(**session[event]).get_chat_response(text)
     except Exception as e:
         error = f"{type(e).__name__}: {e}"
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
@@ -95,8 +56,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         img = await md_to_pic(msg, width=config.chatgpt_image_width)
         msg = MessageSegment.image(img)
     await matcher.send(msg, at_sender=True)
-    session[session_id]["conversation_id"] = chat_bot.conversation_id
-    session[session_id]["parent_id"] = chat_bot.parent_id
+    session[event] = chat_bot.conversation_id, chat_bot.parent_id
 
 
 refresh = on_command("刷新对话", aliases={"刷新会话"}, block=True, rule=to_me(), priority=1)
@@ -104,8 +64,7 @@ refresh = on_command("刷新对话", aliases={"刷新会话"}, block=True, rule=
 
 @refresh.handle()
 async def refresh_conversation(event: MessageEvent) -> None:
-    session_id = event.get_session_id()
-    del session[session_id]
+    del session[event]
     await refresh.send("当前会话已刷新")
 
 
@@ -114,16 +73,15 @@ export = on_command("导出对话", aliases={"导出会话"}, block=True, rule=t
 
 @export.handle()
 async def export_conversation(event: MessageEvent) -> None:
-    session_id = event.get_session_id()
-    cvst = session[session_id]
-    if not cvst:
+    if cvst := session[event]:
+        await export.send(
+            f"已成功导出会话:\n"
+            f"会话ID: {cvst['conversation_id']}\n"
+            f"父消息ID: {cvst['parent_id']}",
+            at_sender=True,
+        )
+    else:
         await export.finish("你还没有任何会话记录", at_sender=True)
-    await export.send(
-        f"已成功导出会话:\n"
-        f"会话ID: {cvst['conversation_id']}\n"
-        f"父消息ID: {cvst['parent_id']}",
-        at_sender=True,
-    )
 
 
 import_ = on_command(
@@ -138,9 +96,7 @@ async def import_conversation(event: MessageEvent, arg: Message = CommandArg()) 
         await import_.finish("至少需要提供会话ID", at_sender=True)
     if len(args) > 2:
         await import_.finish("提供的参数格式不正确", at_sender=True)
-    session_id = event.get_session_id()
-    session[session_id]["conversation_id"] = args.pop(0)
-    session[session_id]["parent_id"] = args[0] if args else None
+    session[event] = args.pop(0), args[0] if args else None
     await import_.send("已成功导入会话", at_sender=True)
 
 

@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from nonebot import get_driver
 from pydantic import BaseModel, Extra
@@ -20,6 +20,7 @@ class Config(BaseModel, extra=Extra.ignore):
     chatgpt_priority: int = 999
     chatgpt_block: bool = True
     chatgpt_private: bool = True
+    chatgpt_scope: Literal["private", "public"] = "private"
 
 
 config = Config.parse_obj(get_driver().config)
