@@ -158,6 +158,7 @@ async def switch_conversation(event: MessageEvent, arg: Message = CommandArg()) 
     name = arg.extract_plain_text().strip()
     try:
         session[event] = session.find(event)[name]
+        await switch.send(f"已切换到会话: {name}", at_sender=True)
     except KeyError:
         await switch.send(f"找不到会话: {name}", at_sender=True)
 
