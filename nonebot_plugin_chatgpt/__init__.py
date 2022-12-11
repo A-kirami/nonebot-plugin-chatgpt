@@ -1,5 +1,10 @@
 from nonebot import on_command, require
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import (
+    GroupMessageEvent,
+    Message,
+    MessageEvent,
+    MessageSegment,
+)
 from nonebot.log import logger
 from nonebot.params import CommandArg, _command_arg
 from nonebot.rule import to_me
@@ -35,7 +40,7 @@ matcher = create_matcher(
     config.chatgpt_block,
 )
 
-session = Session()
+session = Session(config.chatgpt_scope)
 
 
 @matcher.handle(parameterless=[cooldow_checker(config.chatgpt_cd_time)])
@@ -91,6 +96,12 @@ import_ = on_command(
 
 @import_.handle()
 async def import_conversation(event: MessageEvent, arg: Message = CommandArg()) -> None:
+    if (
+        isinstance(event, GroupMessageEvent)
+        and config.chatgpt_scope == "public"
+        and event.sender.role == "member"
+    ):
+        await import_.finish("当前为公共会话模式, 仅支持群管理操作")
     args = arg.extract_plain_text().strip().split()
     if not args:
         await import_.finish("至少需要提供会话ID", at_sender=True)

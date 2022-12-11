@@ -1,8 +1,18 @@
 from collections import defaultdict
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    AsyncGenerator,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from nonebot import on_command, on_message
-from nonebot.adapters.onebot.v11 import GROUP, MessageEvent
+from nonebot.adapters.onebot.v11 import GROUP, GroupMessageEvent, MessageEvent
 from nonebot.matcher import Matcher
 from nonebot.params import Depends
 from nonebot.rule import to_me
@@ -54,8 +64,9 @@ def create_matcher(
 
 
 class Session(dict):
-    def __init__(self) -> None:
+    def __init__(self, scope: Literal["private", "public"]) -> None:
         super().__init__()
+        self.is_private = scope == "private"
 
     def __getitem__(self, event: MessageEvent) -> Dict[str, Any]:
         return super().__getitem__(self.id(event))
@@ -78,4 +89,8 @@ class Session(dict):
         return {}
 
     def id(self, event: MessageEvent) -> str:
-        return event.get_session_id()
+        if self.is_private:
+            return event.get_session_id()
+        return str(
+            event.group_id if isinstance(event, GroupMessageEvent) else event.user_id
+        )
