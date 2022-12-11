@@ -88,7 +88,7 @@ _✨ ChatGPT AI 对话 ✨_
 | CHATGPT_PRIORITY | 否 | 999 | 事件响应器优先级 |
 | CHATGPT_BLOCK | 否 | True | 是否阻断消息传播 |
 | CHATGPT_PRIVATE | 否 | True | 是否允许私聊使用 |
-| CHATGPT_SCOPE | 否 | private | 设置公共会话或私有会话<br>private: 私有会话，群内成员会话各自独立<br>public：公共对话，群内成员共用同一会话 |
+| CHATGPT_SCOPE | 否 | private | 设置公共会话或私有会话<br>private：私有会话，群内成员会话各自独立<br>public：公共对话，群内成员共用同一会话 |
 
 ### 获取 session_token
 
