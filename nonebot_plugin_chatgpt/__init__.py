@@ -43,6 +43,14 @@ matcher = create_matcher(
 session = Session(config.chatgpt_scope)
 
 
+def check_purview(event: MessageEvent) -> bool:
+    return not (
+        isinstance(event, GroupMessageEvent)
+        and config.chatgpt_scope == "public"
+        and event.sender.role == "member"
+    )
+
+
 @matcher.handle(parameterless=[cooldow_checker(config.chatgpt_cd_time)])
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
     message = _command_arg(state) or event.get_message()
@@ -69,6 +77,8 @@ refresh = on_command("刷新对话", aliases={"刷新会话"}, block=True, rule=
 
 @refresh.handle()
 async def refresh_conversation(event: MessageEvent) -> None:
+    if not check_purview(event):
+        await import_.finish("当前为公共会话模式, 仅支持群管理操作")
     del session[event]
     await refresh.send("当前会话已刷新")
 
@@ -96,11 +106,7 @@ import_ = on_command(
 
 @import_.handle()
 async def import_conversation(event: MessageEvent, arg: Message = CommandArg()) -> None:
-    if (
-        isinstance(event, GroupMessageEvent)
-        and config.chatgpt_scope == "public"
-        and event.sender.role == "member"
-    ):
+    if not check_purview(event):
         await import_.finish("当前为公共会话模式, 仅支持群管理操作")
     args = arg.extract_plain_text().strip().split()
     if not args:
@@ -109,6 +115,44 @@ async def import_conversation(event: MessageEvent, arg: Message = CommandArg()) 
         await import_.finish("提供的参数格式不正确", at_sender=True)
     session[event] = args.pop(0), args[0] if args else None
     await import_.send("已成功导入会话", at_sender=True)
+
+
+save = on_command("保存对话", aliases={"保存会话"}, block=True, rule=to_me(), priority=1)
+
+
+@save.handle()
+async def save_conversation(event: MessageEvent, arg: Message = CommandArg()) -> None:
+    if not check_purview(event):
+        await save.finish("当前为公共会话模式, 仅支持群管理操作")
+    if session[event]:
+        name = arg.extract_plain_text().strip()
+        session.save(name, event)
+        await save.send(f"已将当前会话保存为: {name}", at_sender=True)
+    else:
+        await save.finish("你还没有任何会话记录", at_sender=True)
+
+
+check = on_command("查看对话", aliases={"查看会话"}, block=True, rule=to_me(), priority=1)
+
+
+@check.handle()
+async def check_conversation(event: MessageEvent) -> None:
+    name_list = "\n".join(list(session.find(event).keys()))
+    await check.send(f"已保存的会话有:\n{name_list}", at_sender=True)
+
+
+switch = on_command("切换对话", aliases={"切换会话"}, block=True, rule=to_me(), priority=1)
+
+
+@switch.handle()
+async def switch_conversation(event: MessageEvent, arg: Message = CommandArg()) -> None:
+    if not check_purview(event):
+        await switch.finish("当前为公共会话模式, 仅支持群管理操作")
+    name = arg.extract_plain_text().strip()
+    try:
+        session[event] = session.find(event)[name]
+    except KeyError:
+        await switch.send(f"找不到会话: {name}", at_sender=True)
 
 
 @scheduler.scheduled_job("interval", minutes=config.chatgpt_refresh_interval)

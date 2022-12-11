@@ -17,6 +17,8 @@ from nonebot.matcher import Matcher
 from nonebot.params import Depends
 from nonebot.rule import to_me
 
+from .data import setting
+
 
 def cooldow_checker(cd_time: int) -> Any:
     cooldown = defaultdict(int)
@@ -72,14 +74,18 @@ class Session(dict):
         return super().__getitem__(self.id(event))
 
     def __setitem__(
-        self, event: MessageEvent, value: Tuple[Optional[str], Optional[str]]
+        self,
+        event: MessageEvent,
+        value: Union[Tuple[Optional[str], Optional[str]], Dict[str, Any]],
     ) -> None:
         super().__setitem__(
             self.id(event),
             {
                 "conversation_id": value[0],
                 "parent_id": value[1],
-            },
+            }
+            if isinstance(value, tuple)
+            else value,
         )
 
     def __delitem__(self, event: MessageEvent) -> None:
@@ -94,3 +100,12 @@ class Session(dict):
         return str(
             event.group_id if isinstance(event, GroupMessageEvent) else event.user_id
         )
+
+    def save(self, name: str, event: MessageEvent) -> None:
+        sid = self.id(event)
+        setting.session[sid][name] = self[event]
+        setting.save()
+
+    def find(self, event: MessageEvent) -> Dict[str, Any]:
+        sid = self.id(event)
+        return setting.session[sid]
