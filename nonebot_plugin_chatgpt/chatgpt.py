@@ -93,6 +93,8 @@ class Chatbot:
             )
         if response.status_code == 429:
             return "请求过多，请放慢速度"
+        if response.status_code == 401:
+            return "token失效，请重新设置token"
         if response.is_error:
             logger.opt(colors=True).error(
                 f"非预期的响应内容: <r>HTTP{response.status_code}</r> {response.text}"
@@ -134,6 +136,7 @@ class Chatbot:
     @run_sync
     def login(self) -> None:
         from OpenAIAuth.OpenAIAuth import OpenAIAuth
+
         auth = OpenAIAuth(self.account, self.password, bool(self.proxies), self.proxies)  # type: ignore
         try:
             auth.begin()
