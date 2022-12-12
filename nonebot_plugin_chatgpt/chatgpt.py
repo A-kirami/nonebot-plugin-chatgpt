@@ -106,6 +106,9 @@ class Chatbot:
             return "请求过多，请放慢速度"
         if response.status_code == 401:
             return "token失效，请重新设置token"
+        if response.status_code == 403:
+            await self.get_cf_cookies()
+            return await self.get_chat_response(prompt)
         if response.is_error:
             logger.error(
                 f"非预期的响应内容: <r>HTTP{response.status_code}</r> {response.text}"
