@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Literal, Set
+from typing import Any, Dict
 
 from pydantic import BaseModel, Field, root_validator
 
@@ -11,7 +11,7 @@ except ModuleNotFoundError:
 
 class Setting(BaseModel):
     session: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
-    token: str = Field(default_factory=str)
+    token: str = ""
 
     __file_path: Path = Path(__file__).parent / "setting.json"
 
