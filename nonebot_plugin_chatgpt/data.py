@@ -11,6 +11,7 @@ except ModuleNotFoundError:
 
 class Setting(BaseModel):
     session: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+    token: str = Field(default_factory=str)
 
     __file_path: Path = Path(__file__).parent / "setting.json"
 

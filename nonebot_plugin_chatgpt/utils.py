@@ -103,6 +103,8 @@ class Session(dict):
 
     def save(self, name: str, event: MessageEvent) -> None:
         sid = self.id(event)
+        if setting.session.get(sid) is None:
+            setting.session[sid] = {}
         setting.session[sid][name] = self[event]
         setting.save()
 

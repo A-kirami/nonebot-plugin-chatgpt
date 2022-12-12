@@ -13,6 +13,7 @@ from nonebot.typing import T_State
 from .chatgpt import Chatbot
 from .config import config
 from .utils import Session, cooldow_checker, create_matcher
+from .data import setting
 
 require("nonebot_plugin_apscheduler")
 
@@ -24,7 +25,7 @@ if config.chatgpt_image:
     from nonebot_plugin_htmlrender import md_to_pic
 
 chat_bot = Chatbot(
-    token=config.chatgpt_session_token,
+    token=setting.token or config.chatgpt_session_token,
     account=config.chatgpt_account,
     password=config.chatgpt_password,
     api=config.chatgpt_api,
@@ -57,6 +58,12 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     text = message.extract_plain_text().strip()
     try:
         msg = await chat_bot(**session[event]).get_chat_response(text)
+        if (
+            msg == "token失效，请重新设置token"
+            and chat_bot.session_token != config.chatgpt_session_token
+        ):
+            chat_bot.session_token = config.chatgpt_session_token
+            msg = await chat_bot(**session[event]).get_chat_response(text)
     except Exception as e:
         error = f"{type(e).__name__}: {e}"
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
@@ -151,6 +158,7 @@ async def switch_conversation(event: MessageEvent, arg: Message = CommandArg()) 
     name = arg.extract_plain_text().strip()
     try:
         session[event] = session.find(event)[name]
+        await switch.send(f"已切换到会话: {name}", at_sender=True)
     except KeyError:
         await switch.send(f"找不到会话: {name}", at_sender=True)
 
@@ -158,3 +166,5 @@ async def switch_conversation(event: MessageEvent, arg: Message = CommandArg()) 
 @scheduler.scheduled_job("interval", minutes=config.chatgpt_refresh_interval)
 async def refresh_session() -> None:
     await chat_bot.refresh_session()
+    setting.token = chat_bot.session_token
+    setting.save()
