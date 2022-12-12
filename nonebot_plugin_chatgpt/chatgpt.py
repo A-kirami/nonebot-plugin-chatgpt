@@ -107,9 +107,7 @@ class Chatbot:
         if response.status_code == 401:
             return "token失效，请重新设置token"
         if response.is_error:
-            logger.error(
-                f"非预期的响应内容: <r>HTTP{response.status_code}</r> {response.text}"
-            )
+            logger.error(f"非预期的响应内容: <r>HTTP{response.status_code}</r> {response.text}")
             return f"ChatGPT 服务器返回了非预期的内容: HTTP{response.status_code}\n{response.text}"
         lines = response.text.splitlines()
         data = lines[-4][6:]
@@ -145,7 +143,6 @@ class Chatbot:
                     response.cookies.get(SESSION_TOKEN_KEY) or self.session_token
                 )
                 self.authorization = response.json()["accessToken"]
-                logger.debug("刷新会话成功: " + self.session_token+self.cf_clearance)
             except Exception as e:
                 logger.opt(exception=e).error(
                     f"刷新会话失败: <r>HTTP{response.status_code}</r> {response.text}"
@@ -201,7 +198,7 @@ class Chatbot:
             cookies = await content.cookies()
             cf_clearance = next(filter(lambda x: x["name"] == "cf_clearance", cookies))
             self.cf_clearance = cf_clearance["value"]
-            self.user_agent=ua
+            self.user_agent = ua
             await page.close()
             await content.close()
             await browser.close()
