@@ -2,11 +2,17 @@
 name = "nonebot-plugin-chatgpt"
 version = "0.6.0"
 description = "NoneBot2 plugin for AI chat"
-authors = [
-    {name = "Akirami", email = "Akiramiaya@outlook.com"},
+authors = [{ name = "Akirami", email = "Akiramiaya@outlook.com" }]
+license = { text = "MIT" }
+dependencies = [
+    "nonebot2>=2.0.0rc2",
+    "nonebot-adapter-onebot>=2.1.5",
+    "httpx>=0.23.0",
+    "nonebot-plugin-apscheduler>=0.2.0",
+    "nonebot-plugin-htmlrender>=0.2.0.1",
+    "OpenAIAuth>=0.0.3.1",
+    "playwright>=1.28.0"
 ]
-license = {text = "MIT"}
-dependencies = ["nonebot2>=2.0.0rc2", "nonebot-adapter-onebot>=2.1.5", "httpx>=0.23.0", "nonebot-plugin-apscheduler>=0.2.0", "nonebot-plugin-htmlrender>=0.2.0.1", "OpenAIAuth>=0.0.3.1"]
 requires-python = ">=3.8"
 readme = "README.md"
 
