@@ -175,19 +175,21 @@ rollback = on_command("回滚对话", aliases={"回滚会话"}, block=True, rule
 @rollback.handle()
 async def rollback_conversation(event: MessageEvent, arg: Message = CommandArg()):
     num = arg.extract_plain_text().strip()
-    if num.isdigit():
+    if not num:
+        num = 1
+    elif num.isdigit():
         num = int(num)
-        if session[event]:
-            count = session.count(event)
-            if num > count:
-                await rollback.finish(f"历史会话数不足，当前历史会话数为{count}", at_sender=True)
-            else:
-                for i in range(num):
-                    session.pop(event)
-                await rollback.send(f"已成功回滚{num}条会话", at_sender=True)
-        else:
-            await save.finish("你还没有任何会话记录", at_sender=True)
     else:
         await rollback.finish(
             f"请输入有效的数字，最大回滚数为{config.chatgpt_max_rollback}", at_sender=True
         )
+    if session[event]:
+        count = session.count(event)
+        if num > count:
+            await rollback.finish(f"历史会话数不足，当前历史会话数为{count}", at_sender=True)
+        else:
+            for i in range(num):
+                session.pop(event)
+            await rollback.send(f"已成功回滚{num}条会话", at_sender=True)
+    else:
+        await save.finish("你还没有任何会话记录", at_sender=True)
