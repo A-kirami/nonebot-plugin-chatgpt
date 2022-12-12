@@ -21,6 +21,7 @@ class Config(BaseModel, extra=Extra.ignore):
     chatgpt_block: bool = True
     chatgpt_private: bool = True
     chatgpt_scope: Literal["private", "public"] = "private"
+    chatgpt_max_rollback: int = 5
 
 
 config = Config.parse_obj(get_driver().config)
