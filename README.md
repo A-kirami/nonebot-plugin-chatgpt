@@ -114,3 +114,14 @@ _✨ ChatGPT AI 对话 ✨_
 | 保存会话/保存对话 + 会话名称 | 是 | 群聊/私聊 | 将当前会话保存 |
 | 查看会话/查看对话 | 是 | 群聊/私聊 | 查看已保存的所有会话 |
 | 切换会话/切换对话 + 会话名称 | 是 | 群聊/私聊 | 切换到指定的会话 |
+
+
+## 🤝 贡献
+
+### 🎉 鸣谢
+
+感谢以下开发者对该项目做出的贡献：
+
+<a href="https://github.com/A-kirami/nonebot-plugin-chatgpt/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=A-kirami/nonebot-plugin-chatgpt" />
+</a>
