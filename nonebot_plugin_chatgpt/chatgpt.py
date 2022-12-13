@@ -89,7 +89,7 @@ class Chatbot:
         }
 
     async def get_chat_response(self, prompt: str) -> str:
-        for i in range(3):
+        for i in range(2):
             if not self.authorization:
                 await self.refresh_session()
             else:
@@ -154,7 +154,7 @@ class Chatbot:
                     response.cookies.get(SESSION_TOKEN_KEY) or self.session_token
                 )
                 self.authorization = response.json()["accessToken"]
-                logger.debug("刷新会话成功: " + self.session_token+self.cf_clearance)
+                logger.debug("刷新会话成功: " + self.session_token + self.cf_clearance)
             except Exception as e:
                 logger.opt(colors=True, exception=e).error(
                     f"刷新会话失败: <r>HTTP{response.status_code}</r> {escape_tag(response.text)}"
@@ -201,23 +201,33 @@ class Chatbot:
                         "--disable-dev-shm-usage",
                         "--incognito",
                     ],
-                    proxy={"server": self.proxies} if self.proxies else None,  # your proxy
+                    proxy={"server": self.proxies}
+                    if self.proxies
+                    else None,  # your proxy
                 )
             except Exception as e:
-                logger.opt(exception=e).error("playwright未安装，请先在shell中运行playwright install")
+                logger.opt(exception=e).error(
+                    "playwright未安装，请先在shell中运行playwright install"
+                )
             ua = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/{browser.version}"
             content = await browser.new_context(user_agent=ua)
             page = await content.new_page()
             await page.add_init_script(js)
-            try:
-                await page.goto("https://chat.openai.com/chat")
+            cf_clearance = None
+            await page.goto("https://chat.openai.com/chat")
+            for j in range(6):
+                if cf_clearance:
+                    break
                 await asyncio.sleep(5)
                 cookies = await content.cookies()
-            except Exception as e:
-                logger.opt(exception=e).error("cf cookies获取失败，遇到人机交互验证")
-            cf_clearance = next(filter(lambda x: x["name"] == "cf_clearance", cookies))
+                for i in cookies:
+                    if i["name"] == "cf_clearance":
+                        cf_clearance = i
+                        break
+            else:
+                logger.error("cf cookies获取失败，可能遇到了人工校验")
             self.cf_clearance = cf_clearance["value"]
-            self.user_agent=ua
+            self.user_agent = ua
             await page.close()
             await content.close()
             await browser.close()
