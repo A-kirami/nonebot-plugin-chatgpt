@@ -89,8 +89,13 @@ class Chatbot:
         }
 
     async def get_chat_response(self, prompt: str) -> str:
-        if not self.authorization:
-            await self.refresh_session()
+        for i in range(3):
+            if not self.authorization:
+                await self.refresh_session()
+            else:
+                break
+        else:
+            return "获取session失败，请检查后台报错"
         cookies = {SESSION_TOKEN_KEY: self.session_token}
         if self.cf_clearance:
             cookies[CF_CLEARANCE_KEY] = self.cf_clearance
@@ -185,18 +190,21 @@ class Chatbot:
     async def get_cf_cookies(self) -> None:
         logger.debug("正在获取cf cookies")
         async with async_playwright() as p:
-            browser = await p.firefox.launch(
-                headless=True,
-                args=[
-                    "--disable-extensions",
-                    "--disable-application-cache",
-                    "--disable-gpu",
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--incognito",
-                ],
-                proxy={"server": self.proxies} if self.proxies else None,  # your proxy
-            )
+            try:
+                browser = await p.firefox.launch(
+                    headless=True,
+                    args=[
+                        "--disable-extensions",
+                        "--disable-application-cache",
+                        "--disable-gpu",
+                        "--disable-setuid-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--incognito",
+                    ],
+                    proxy={"server": self.proxies} if self.proxies else None,  # your proxy
+                )
+            except Exception as e:
+                logger.opt(exception=e).error("playwright未安装，请先在shell中运行playwright install")
             ua = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/{browser.version}"
             content = await browser.new_context(user_agent=ua)
             page = await content.new_page()
@@ -205,8 +213,8 @@ class Chatbot:
                 await page.goto("https://chat.openai.com/chat")
                 await asyncio.sleep(5)
                 cookies = await content.cookies()
-            except:
-                logger.error("cf cookies获取失败")
+            except Exception as e:
+                logger.opt(exception=e).error("cf cookies获取失败，遇到人机交互验证")
             cf_clearance = next(filter(lambda x: x["name"] == "cf_clearance", cookies))
             self.cf_clearance = cf_clearance["value"]
             self.user_agent=ua
