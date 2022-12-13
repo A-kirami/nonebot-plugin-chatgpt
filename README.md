@@ -92,6 +92,7 @@ windows系统需要在env文件中设置fastapi_reload=false
 | CHATGPT_PRIVATE | 否 | True | 是否允许私聊使用 |
 | CHATGPT_SCOPE | 否 | private | 设置公共会话或私有会话<br>private：私有会话，群内成员会话各自独立<br>public：公共对话，群内成员共用同一会话 |
 | CHATGPT_DATA | 否 | 插件目录下 | 插件数据保存目录的路径 |
+| CHATGPT_MAX_ROLLBACK | 否 | 5 | 设置最多支持回滚多少会话 |
 
 ### 获取 session_token
 
@@ -116,6 +117,7 @@ windows系统需要在env文件中设置fastapi_reload=false
 | 保存会话/保存对话 + 会话名称 | 是 | 群聊/私聊 | 将当前会话保存 |
 | 查看会话/查看对话 | 是 | 群聊/私聊 | 查看已保存的所有会话 |
 | 切换会话/切换对话 + 会话名称 | 是 | 群聊/私聊 | 切换到指定的会话 |
+| 回滚会话/回滚对话 | 是 | 群聊/私聊 | 返回到之前的会话，输入数字可以返回多个会话，但不可以超过最大支持数量 |
 
 
 ## 🤝 贡献
