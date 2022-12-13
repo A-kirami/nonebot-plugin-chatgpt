@@ -122,6 +122,7 @@ class Chatbot:
         return response["message"]["content"]["parts"][0]
 
     async def refresh_session(self) -> None:
+        logger.debug("正在刷新session")
         if self.auto_auth:
             await self.login()
         else:
@@ -182,9 +183,10 @@ class Chatbot:
             logger.error("ChatGPT 登陆错误!")
 
     async def get_cf_cookies(self) -> None:
+        logger.debug("正在获取cf cookies")
         async with async_playwright() as p:
-            browser = await p.chromium.launch(
-                headless=False,
+            browser = await p.firefox.launch(
+                headless=True,
                 args=[
                     "--disable-extensions",
                     "--disable-application-cache",
@@ -195,16 +197,20 @@ class Chatbot:
                 ],
                 proxy={"server": self.proxies} if self.proxies else None,  # your proxy
             )
-            ua = f"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chromium/{browser.version} Safari/537.36"
+            ua = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/{browser.version}"
             content = await browser.new_context(user_agent=ua)
             page = await content.new_page()
             await page.add_init_script(js)
-            await page.goto("https://chat.openai.com/chat")
-            await asyncio.sleep(5)
-            cookies = await content.cookies()
+            try:
+                await page.goto("https://chat.openai.com/chat")
+                await asyncio.sleep(5)
+                cookies = await content.cookies()
+            except:
+                logger.error("cf cookies获取失败")
             cf_clearance = next(filter(lambda x: x["name"] == "cf_clearance", cookies))
             self.cf_clearance = cf_clearance["value"]
             self.user_agent=ua
             await page.close()
             await content.close()
             await browser.close()
+        logger.debug("cf cookies获取成功")
