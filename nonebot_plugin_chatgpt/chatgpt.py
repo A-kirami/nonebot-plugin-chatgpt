@@ -193,14 +193,6 @@ class Chatbot:
             try:
                 browser = await p.firefox.launch(
                     headless=True,
-                    args=[
-                        "--disable-extensions",
-                        "--disable-application-cache",
-                        "--disable-gpu",
-                        "--disable-setuid-sandbox",
-                        "--disable-dev-shm-usage",
-                        "--incognito",
-                    ],
                     proxy={"server": self.proxies}
                     if self.proxies
                     else None,  # your proxy
@@ -209,6 +201,7 @@ class Chatbot:
                 logger.opt(exception=e).error(
                     "playwright未安装，请先在shell中运行playwright install"
                 )
+                return
             ua = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/{browser.version}"
             content = await browser.new_context(user_agent=ua)
             page = await content.new_page()
