@@ -181,7 +181,7 @@ async def rollback_conversation(event:MessageEvent,arg:Message=CommandArg()):
             if num > count:
                 await rollback.finish(f"历史会话数不足，当前历史会话数为{count}",at_sender=True)
             else:
-                for i in range(num):
+                for _ in range(num):
                     session.pop(event)
                 await rollback.send(f"已成功回滚{num}条会话",at_sender=True)
         else:
