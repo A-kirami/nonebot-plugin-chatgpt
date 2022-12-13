@@ -3,6 +3,8 @@ from typing import Any, Dict
 
 from pydantic import BaseModel, Field, root_validator
 
+from .config import config
+
 try:
     import ujson as json
 except ModuleNotFoundError:
@@ -13,7 +15,7 @@ class Setting(BaseModel):
     session: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     token: str = ""
 
-    __file_path: Path = Path(__file__).parent / "setting.json"
+    __file_path: Path = config.chatgpt_data / "setting.json"
 
     @property
     def file_path(self) -> Path:
