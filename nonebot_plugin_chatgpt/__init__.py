@@ -19,10 +19,9 @@ require("nonebot_plugin_apscheduler")
 
 from nonebot_plugin_apscheduler import scheduler
 
-if config.chatgpt_image:
-    require("nonebot_plugin_htmlrender")
+require("nonebot_plugin_htmlrender")
 
-    from nonebot_plugin_htmlrender import md_to_pic
+from nonebot_plugin_htmlrender import md_to_pic
 
 chat_bot = Chatbot(
     token=setting.token or config.chatgpt_session_token,

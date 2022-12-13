@@ -71,6 +71,8 @@ _✨ ChatGPT AI 对话 ✨_
 
 在 nonebot2 项目的`.env`文件中添加下表中的必填配置（在arm平台，可能必须使用CHATGPT_SESSION_TOKEN登录）
 
+windows系统需要在env文件中设置fastapi_reload=false
+
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
 | CHATGPT_SESSION_TOKEN | 否 | 空字符串 | ChatGPT 的 session_token，如配置则优先使用 |
