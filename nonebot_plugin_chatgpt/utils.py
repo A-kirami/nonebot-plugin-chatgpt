@@ -10,7 +10,7 @@ from typing import (
     Type,
     Union,
 )
-
+from collections import deque
 from nonebot import on_command, on_message
 from nonebot.adapters.onebot.v11 import GROUP, GroupMessageEvent, MessageEvent
 from nonebot.matcher import Matcher
@@ -18,6 +18,7 @@ from nonebot.params import Depends
 from nonebot.rule import to_me
 
 from .data import setting
+from .config import config
 
 
 def cooldow_checker(cd_time: int) -> Any:
@@ -78,15 +79,25 @@ class Session(dict):
         event: MessageEvent,
         value: Union[Tuple[Optional[str], Optional[str]], Dict[str, Any]],
     ) -> None:
-        super().__setitem__(
-            self.id(event),
-            {
-                "conversation_id": value[0],
-                "parent_id": value[1],
-            }
-            if isinstance(value, tuple)
-            else value,
-        )
+        if isinstance(value, tuple):
+            conversation_id, parent_id = value
+        else:
+            conversation_id = value["conversation_id"]
+            parent_id = value["parent_id"]
+        if self.__getitem__(event):
+            if isinstance(value, tuple):
+                self.__getitem__(event)["conversation_id"].append(conversation_id)
+                self.__getitem__(event)["parent_id"].append(parent_id)
+        else:
+            super().__setitem__(
+                self.id(event),
+                {
+                    "conversation_id": deque(
+                        [conversation_id], maxlen=config.chatgpt_max_rollback
+                    ),
+                    "parent_id": deque([parent_id], maxlen=config.chatgpt_max_rollback),
+                },
+            )
 
     def __delitem__(self, event: MessageEvent) -> None:
         return super().__delitem__(self.id(event))
@@ -105,9 +116,20 @@ class Session(dict):
         sid = self.id(event)
         if setting.session.get(sid) is None:
             setting.session[sid] = {}
-        setting.session[sid][name] = self[event]
+        setting.session[sid][name] = {
+            "conversation_id": self[event]["conversation_id"][-1],
+            "parent_id": self[event]["parent_id"][-1],
+        }
         setting.save()
 
     def find(self, event: MessageEvent) -> Dict[str, Any]:
         sid = self.id(event)
         return setting.session[sid]
+
+    def count(self, event: MessageEvent):
+        return len(self[event]["conversation_id"])
+
+    def pop(self, event: MessageEvent):
+        conversation_id = self[event]["conversation_id"].pop()
+        parent_id = self[event]["parent_id"].pop()
+        return conversation_id, parent_id
