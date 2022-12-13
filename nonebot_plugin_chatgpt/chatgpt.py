@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 import asyncio
 import httpx
 from nonebot.log import logger
-from nonebot.utils import run_sync
+from nonebot.utils import escape_tag, run_sync
 from typing_extensions import Self
 
 try:
@@ -110,7 +110,9 @@ class Chatbot:
             await self.get_cf_cookies()
             return await self.get_chat_response(prompt)
         if response.is_error:
-            logger.error(f"非预期的响应内容: <r>HTTP{response.status_code}</r> {response.text}")
+            logger.opt(colors=True).error(
+                f"非预期的响应内容: <r>HTTP{response.status_code}</r> {escape_tag(response.text)}"
+            )
             return f"ChatGPT 服务器返回了非预期的内容: HTTP{response.status_code}\n{response.text}"
         lines = response.text.splitlines()
         data = lines[-4][6:]
@@ -148,8 +150,8 @@ class Chatbot:
                 )
                 self.authorization = response.json()["accessToken"]
             except Exception as e:
-                logger.opt(exception=e).error(
-                    f"刷新会话失败: <r>HTTP{response.status_code}</r> {response.text}"
+                logger.opt(colors=True, exception=e).error(
+                    f"刷新会话失败: <r>HTTP{response.status_code}</r> {escape_tag(response.text)}"
                 )
 
     @run_sync
