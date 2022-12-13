@@ -69,19 +69,9 @@ _✨ ChatGPT AI 对话 ✨_
 
 ## ⚙️ 配置
 
-<details>
-<summary>初始化playwright</summary>
-如果你之前未初始化过playwright，那么插件将无法绕过cf
-
-在安装插件完成后执行
-
-    playwright install
+在 nonebot2 项目的`.env`文件中添加下表中的必填配置（在arm平台，可能必须使用CHATGPT_SESSION_TOKEN登录）
 
 windows系统需要在env文件中设置fastapi_reload=false
-
-</details>
-
-在 nonebot2 项目的`.env`文件中添加下表中的必填配置（在arm平台，可能必须使用CHATGPT_SESSION_TOKEN登录）
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
