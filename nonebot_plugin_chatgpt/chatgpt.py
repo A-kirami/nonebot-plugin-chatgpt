@@ -44,8 +44,8 @@ class Chatbot:
     def __call__(
         self, conversation_id: Optional[str] = None, parent_id: Optional[str] = None
     ) -> Self:
-        self.conversation_id = conversation_id
-        self.parent_id = parent_id or self.id
+        self.conversation_id = conversation_id[-1] if conversation_id else None
+        self.parent_id = parent_id[-1] if parent_id else self.id
         return self
 
     @property
