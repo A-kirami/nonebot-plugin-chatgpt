@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Literal, Optional, Union
 
 from nonebot import get_driver
@@ -21,6 +22,7 @@ class Config(BaseModel, extra=Extra.ignore):
     chatgpt_block: bool = True
     chatgpt_private: bool = True
     chatgpt_scope: Literal["private", "public"] = "private"
+    chatgpt_data: Path = Path(__file__).parent
     chatgpt_max_rollback: int = 5
 
 
