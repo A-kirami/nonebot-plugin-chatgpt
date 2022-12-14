@@ -12,8 +12,8 @@ from nonebot.typing import T_State
 
 from .chatgpt import Chatbot
 from .config import config
-from .utils import Session, cooldow_checker, create_matcher
 from .data import setting
+from .utils import Session, cooldow_checker, create_matcher
 
 require("nonebot_plugin_apscheduler")
 
