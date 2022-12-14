@@ -39,6 +39,8 @@ class Chatbot:
         self.proxies = proxies
         self.timeout = timeout
         self.authorization = ""
+        self.conversation_id = None
+        self.parent_id = None
 
         self.cf_clearance = ""
         self.user_agent = ""
@@ -91,7 +93,7 @@ class Chatbot:
         }
 
     async def get_chat_response(self, prompt: str) -> str:
-        for i in range(2):
+        for _ in range(2):
             if not self.authorization:
                 await self.refresh_session()
             else:
@@ -156,7 +158,7 @@ class Chatbot:
                     response.cookies.get(SESSION_TOKEN_KEY) or self.session_token
                 )
                 self.authorization = response.json()["accessToken"]
-                logger.debug("刷新会话成功: " + self.session_token + self.cf_clearance)
+                logger.debug(f"刷新会话成功: {self.session_token}{self.cf_clearance}")
             except Exception as e:
                 logger.opt(colors=True, exception=e).error(
                     f"刷新会话失败: <r>HTTP{response.status_code}</r> {escape_tag(response.text)}"
