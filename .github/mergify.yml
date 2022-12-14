@@ -1,0 +1,112 @@
+queue_rules:
+  - name: default
+    conditions: []
+
+pull_request_rules:
+  - name: 合并后删除分支
+    conditions:
+      - merged
+    actions:
+      delete_head_branch:
+
+  - name: 移除过时的审查评论
+    conditions:
+      - author!=A-kirami
+    actions:
+      dismiss_reviews:
+
+  - name: 发布 PR 时分配受理人
+    conditions:
+      - -merged
+      - -closed
+      - -author~=^.*\[bot\]$
+    actions:
+      assign:
+        add_users:
+          - A-kirami
+
+  - name: CI 静态分析通过时请求审查
+    conditions:
+      - -merged
+      - -closed
+      - "check-success=DeepSource: Python"
+      - "check-success=Codacy Static Code Analysis"
+      - -author=A-kirami
+      - -author~=^.*\[bot\]$
+    actions:
+      request_reviews:
+        users:
+          - A-kirami
+
+  - name: CI 静态分析失败
+    conditions:
+      - or:
+        - "check-failure=DeepSource: Python"
+        - "check-failure=Codacy Static Code Analysis"
+    actions:
+        comment:
+          message: "@{{author}} 这个拉取请求中存在代码质量问题, 请查看状态检查中的详细报告并修复问题"
+
+  - name: 所有者添加批准标签后加入合并队列
+    conditions:
+      - author=A-kirami
+      - check-success=CodeTests
+      - label=approve
+    actions:
+      review:
+        type: APPROVE
+
+  - name: 审查通过后加入合并队列
+    conditions:
+      - "#approved-reviews-by>=1"
+      - "#review-requested=0"
+      - "#changes-requested-reviews-by=0"
+      - check-success=CodeTests
+      - or:
+        - author=A-kirami
+        - and:
+          - author!=A-kirami
+          - approved-reviews-by=A-kirami
+    actions:
+      queue:
+        name: default
+        method: squash
+        commit_message_template: >
+          {{ title }}
+
+  - name: 在 PR 意外取消排队时通知
+    conditions:
+      - 'check-failure=Queue: Embarked in merge train'
+    actions:
+      comment:
+        message: >
+          @{{ author }}，此请求未能合并，已从合并队列中退出。
+          如果您认为您的 PR 在合并队列中失败是因为测试异常，可以通过评论'@mergifyio requeue'来重新加入队列。
+          更多细节可以在 "Queue: Embarked in merge train" 检查运行中找到。
+
+  - name: 要求解决冲突
+    conditions:
+      - conflict
+    actions:
+        comment:
+          message: "@{{author}} 这个 PR 中发生了冲突, 请解决此冲突"
+        label:
+          add:
+            - conflict
+
+  - name: 解决冲突后移除 conflict 标签
+    conditions:
+      - -conflict
+    actions:
+      label:
+        remove:
+          - conflict
+
+  - name: 合并后感谢贡献者
+    conditions:
+      - merged
+      - -author=A-kirami
+      - -author~=^.*\[bot\]$
+    actions:
+      comment:
+        message: "@{{author}} 此 PR 已合并, 感谢你做出的贡献!"
