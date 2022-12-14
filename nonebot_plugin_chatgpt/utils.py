@@ -126,11 +126,11 @@ class Session(dict):
         sid = self.id(event)
         return setting.session[sid]
 
-    def count(self, event: MessageEvent) -> int:
-        return self[event]["conversation_id"].count()
+    def count(self, event: MessageEvent):
+        return len(self[event]["conversation_id"])
 
-    def pop(self, event: MessageEvent) -> Tuple[str, str]:
-        sid = self.id(event)
-        conversation_id = setting.session[sid]["conversation_id"].pop()
-        parent_id = setting.session[sid]["parent_id"].pop()
+    def pop(self, event: MessageEvent):
+        conversation_id = self[event]["conversation_id"].pop()
+        parent_id = self[event]["parent_id"].pop()
+
         return conversation_id, parent_id
