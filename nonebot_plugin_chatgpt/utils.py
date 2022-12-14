@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import (
     Any,
     AsyncGenerator,
@@ -10,15 +10,15 @@ from typing import (
     Type,
     Union,
 )
-from collections import deque
+
 from nonebot import on_command, on_message
 from nonebot.adapters.onebot.v11 import GROUP, GroupMessageEvent, MessageEvent
 from nonebot.matcher import Matcher
 from nonebot.params import Depends
 from nonebot.rule import to_me
 
-from .data import setting
 from .config import config
+from .data import setting
 
 
 def cooldow_checker(cd_time: int) -> Any:
@@ -80,24 +80,24 @@ class Session(dict):
         value: Union[Tuple[Optional[str], Optional[str]], Dict[str, Any]],
     ) -> None:
         if isinstance(value, tuple):
-            conversation_id,parent_id=value
+            conversation_id, parent_id = value
         else:
-            conversation_id=value['conversation_id']
-            parent_id=value['parent_id']
+            conversation_id = value["conversation_id"]
+            parent_id = value["parent_id"]
         if self.__getitem__(event):
-                if isinstance(value, tuple):
-                    self.__getitem__(event)["conversation_id"].append(conversation_id)
-                    self.__getitem__(event)["parent_id"].append(parent_id)
+            if isinstance(value, tuple):
+                self.__getitem__(event)["conversation_id"].append(conversation_id)
+                self.__getitem__(event)["parent_id"].append(parent_id)
         else:
-                super().__setitem__(
-                    self.id(event),
-                    {
-                        "conversation_id": deque(
-                            [conversation_id], maxlen=config.chatgpt_max_rollback
-                        ),
-                        "parent_id": deque([parent_id], maxlen=config.chatgpt_max_rollback),
-                    }
-                )
+            super().__setitem__(
+                self.id(event),
+                {
+                    "conversation_id": deque(
+                        [conversation_id], maxlen=config.chatgpt_max_rollback
+                    ),
+                    "parent_id": deque([parent_id], maxlen=config.chatgpt_max_rollback),
+                },
+            )
 
     def __delitem__(self, event: MessageEvent) -> None:
         return super().__delitem__(self.id(event))
@@ -117,8 +117,8 @@ class Session(dict):
         if setting.session.get(sid) is None:
             setting.session[sid] = {}
         setting.session[sid][name] = {
-            "conversation_id": self[sid]["conversation_id"][-1],
-            "parent_id": self[sid]["parent_id"][-1],
+            "conversation_id": self[event]["conversation_id"][-1],
+            "parent_id": self[event]["parent_id"][-1],
         }
         setting.save()
 
@@ -126,11 +126,10 @@ class Session(dict):
         sid = self.id(event)
         return setting.session[sid]
 
-    def count(self, event: MessageEvent):
-        sid = self.id(event)
-        return self[sid]["conversation_id"].count()
+    def count(self, event: MessageEvent) -> int:
+        return self[event]["conversation_id"].count()
 
-    def pop(self, event: MessageEvent):
+    def pop(self, event: MessageEvent) -> Tuple[str, str]:
         sid = self.id(event)
         conversation_id = setting.session[sid]["conversation_id"].pop()
         parent_id = setting.session[sid]["parent_id"].pop()
