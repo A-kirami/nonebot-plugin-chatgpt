@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import (
     Any,
     AsyncGenerator,
@@ -10,15 +10,15 @@ from typing import (
     Type,
     Union,
 )
-from collections import deque
+
 from nonebot import on_command, on_message
 from nonebot.adapters.onebot.v11 import GROUP, GroupMessageEvent, MessageEvent
 from nonebot.matcher import Matcher
 from nonebot.params import Depends
 from nonebot.rule import to_me
 
-from .data import setting
 from .config import config
+from .data import setting
 
 
 def cooldow_checker(cd_time: int) -> Any:
@@ -132,4 +132,5 @@ class Session(dict):
     def pop(self, event: MessageEvent):
         conversation_id = self[event]["conversation_id"].pop()
         parent_id = self[event]["parent_id"].pop()
+
         return conversation_id, parent_id

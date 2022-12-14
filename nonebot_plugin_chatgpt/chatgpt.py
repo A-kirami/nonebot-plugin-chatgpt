@@ -1,17 +1,19 @@
+import asyncio
 import uuid
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
-import asyncio
+
 import httpx
 from nonebot.log import logger
 from nonebot.utils import escape_tag, run_sync
+from playwright.async_api import async_playwright
 from typing_extensions import Self
 
 try:
     import ujson as json
 except ModuleNotFoundError:
     import json
-from playwright.async_api import async_playwright
+
 
 js = "Object.defineProperties(navigator, {webdriver:{get:()=>undefined}});"
 
@@ -208,7 +210,7 @@ class Chatbot:
             await page.add_init_script(js)
             cf_clearance = None
             await page.goto("https://chat.openai.com/chat")
-            for j in range(6):
+            for _ in range(6):
                 if cf_clearance:
                     break
                 await asyncio.sleep(5)
@@ -219,6 +221,8 @@ class Chatbot:
                         break
             else:
                 logger.error("cf cookies获取失败，可能遇到了人工校验")
+            if not cf_clearance:
+                raise RuntimeError("cf_clearance is None")
             self.cf_clearance = cf_clearance["value"]
             self.user_agent = ua
             await page.close()
