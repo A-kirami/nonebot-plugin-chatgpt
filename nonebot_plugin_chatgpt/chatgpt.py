@@ -9,12 +9,14 @@ from nonebot.utils import escape_tag, run_sync
 from playwright.async_api import async_playwright
 from typing_extensions import Self
 
+from contextlib import asynccontextmanager
+
 driver = get_driver()
 try:
     import ujson as json
 except ModuleNotFoundError:
     import json
-from playwright.async_api import async_playwright, Route
+from playwright.async_api import async_playwright, Route, Page
 
 SESSION_TOKEN_KEY = "__Secure-next-auth.session-token"
 
@@ -50,7 +52,7 @@ class Chatbot:
         playwright = await self.playwright.start()
         try:
             self.browser = await playwright.firefox.launch(
-                headless=False,
+                headless=True,
                 proxy={"server": self.proxies} if self.proxies else None,  # your proxy
             )
         except Exception as e:
@@ -108,50 +110,54 @@ class Chatbot:
             "model": "text-davinci-002-render",
         }
 
+    @asynccontextmanager
+    async def get_page(self):
+        page = await self.content.new_page()
+        js = "Object.defineProperties(navigator, {webdriver:{get:()=>undefined}});"
+        await page.add_init_script(js)
+        await page.goto("https://chat.openai.com/chat")
+        yield page
+        await page.close()
+
     async def get_chat_response(self, prompt: str) -> str:
         if not self.authorization:
             await self.refresh_session()
-        page = await self.content.new_page()
-        await page.goto("https://chat.openai.com/chat")
+        async with self.get_page() as page:
+            if self.proxies:
+                await self.get_cf_cookies(page)
 
-        async def change_json(route: Route):
-            await route.continue_(
-                post_data=json.dumps(self.get_payload(prompt)),
-            )
+            async def change_json(route: Route):
+                await route.continue_(
+                    post_data=json.dumps(self.get_payload(prompt)),
+                )
 
-        await self.content.route(
-            "https://chat.openai.com/backend-api/conversation", change_json
-        )
-        await page.locator("textarea").fill(prompt)
-        button = page.locator(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
-        if await button.count():
-            await button.click()
-            await page.click(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
-            await page.click(".btn.flex.justify-center.gap-2.btn-primary.ml-auto")
-        async with page.expect_response(
-            "https://chat.openai.com/backend-api/conversation"
-        ) as response_info:
-            await page.locator("button").last.click()
-        response = await response_info.value
-        if response.status == 429:
-            return "请求过多，请放慢速度"
-        if response.status == 401:
-            return "token失效，请重新设置token"
-        if response.status == 403:
-            await self.get_cf_cookies()
-            return await self.get_chat_response(prompt)
-        if response.status != 200:
-            logger.opt(colors=True).error(
-                f"非预期的响应内容: <r>HTTP{response.status}</r> {escape_tag(response.text)}"
+            await self.content.route(
+                "https://chat.openai.com/backend-api/conversation", change_json
             )
-            return f"ChatGPT 服务器返回了非预期的内容: HTTP{response.status}\n{response.text}"
-        lines = await response.text()
-        lines = lines.splitlines()
-        data = lines[-4][6:]
-        response = json.loads(data)
-        self.parent_id = response["message"]["id"]
-        self.conversation_id = response["conversation_id"]
-        await page.close()
+            await page.locator("textarea").fill(prompt)
+            async with page.expect_response(
+                "https://chat.openai.com/backend-api/conversation"
+            ) as response_info:
+                await page.locator("button").last.click()
+            response = await response_info.value
+            if response.status == 429:
+                return "请求过多，请放慢速度"
+            if response.status == 401:
+                return "token失效，请重新设置token"
+            if response.status == 403:
+                await self.get_cf_cookies(page)
+                return await self.get_chat_response(prompt)
+            if response.status != 200:
+                logger.opt(colors=True).error(
+                    f"非预期的响应内容: <r>HTTP{response.status}</r> {escape_tag(response.text)}"
+                )
+                return f"ChatGPT 服务器返回了非预期的内容: HTTP{response.status}\n{response.text}"
+            lines = await response.text()
+            lines = lines.splitlines()
+            data = lines[-4][6:]
+            response = json.loads(data)
+            self.parent_id = response["message"]["id"]
+            self.conversation_id = response["conversation_id"]
         return response["message"]["content"]["parts"][0]
 
     async def refresh_session(self) -> None:
@@ -159,18 +165,21 @@ class Chatbot:
         if self.auto_auth:
             await self.login()
         else:
-            api = self.content.request
-            response = await api.get(urljoin(self.api_url, "api/auth/session"))
-            try:
-                if response.status == 403:
-                    await self.get_cf_cookies()
-                    await self.refresh_session()
-                    return
-                logger.debug("刷新会话成功")
-            except Exception as e:
-                logger.opt(colors=True, exception=e).error(
+            async with self.get_page() as page:
+                cf = page.locator("#challenging-running")
+                if await cf.count():
+                    await self.get_cf_cookies(page)
+                async with page.expect_request(
+                    "https://chat.openai.com/api/auth/session"
+                ) as session:
+                    await asyncio.sleep(1)
+                request = await session.value
+                response = await request.response()
+            if response.status != 200:
+                logger.opt(colors=True).error(
                     f"刷新会话失败: <r>HTTP{response.status}</r> {escape_tag(await response.text())}"
                 )
+            logger.debug("刷新会话成功")
 
     @run_sync
     def login(self) -> None:
@@ -199,24 +208,24 @@ class Chatbot:
         else:
             logger.error("ChatGPT 登陆错误!")
 
-    async def get_cf_cookies(self) -> None:
+    async def get_cf_cookies(self, page: Page) -> None:
         logger.debug("正在获取cf cookies")
-        page = await self.content.new_page()
-        js = "Object.defineProperties(navigator, {webdriver:{get:()=>undefined}});"
-        await page.add_init_script(js)
-        await page.goto("https://chat.openai.com/chat")
-        for i in range(6):
-            async with page.expect_request("https://chat.openai.com/chat") as done:
-                button = page.get_by_role("button", name="Verify you are human")
-                if await button.count():
-                    await button.click()
-                label = page.frame_locator("#cf-chl-widget-vh3ev").locator("label span")
-                if await label.count():
-                    await label.click()
-                await asyncio.sleep(5)
-            if done:
+        for i in range(20):
+            button = page.get_by_role("button", name="Verify you are human")
+            if await button.count():
+                await button.click()
+            label = page.locator("label span")
+            if await label.count():
+                await label.click()
+            await asyncio.sleep(1)
+            textarea = page.locator("textarea")
+            if await textarea.count():
                 break
         else:
-            logger.error("cf cookies获取失败，可能遇到了人工校验")
-        await page.close()
+            logger.error("cf cookies获取失败")
+        next_button = page.locator(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
+        if await next_button.count():
+            await next_button.click()
+            await page.click(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
+            await page.click(".btn.flex.justify-center.gap-2.btn-primary.ml-auto")
         logger.debug("cf cookies获取成功")
