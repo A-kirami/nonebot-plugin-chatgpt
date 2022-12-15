@@ -2,11 +2,9 @@ import asyncio
 import uuid
 from typing import Any, Dict, Optional
 from contextlib import asynccontextmanager
-import asyncio
 from nonebot import get_driver
 from nonebot.log import logger
 from nonebot.utils import escape_tag, run_sync
-from playwright.async_api import async_playwright
 from typing_extensions import Self
 from playwright.async_api import async_playwright, Route, Page
 
@@ -39,6 +37,9 @@ class Chatbot:
         self.timeout = timeout
         self.content = None
         self.authorization = None
+        self.parent_id = None
+        self.conversation_id = None
+        self.browser = None
         self.playwright = async_playwright()
         if self.session_token:
             self.auto_auth = False
@@ -48,7 +49,7 @@ class Chatbot:
             raise ValueError("至少需要配置 session_token 或者 account 和 password")
 
     async def playwright_start(self):
-        #启动浏览器，在插件开始运行时调用
+        # 启动浏览器，在插件开始运行时调用
         playwright = await self.playwright.start()
         try:
             self.browser = await playwright.firefox.launch(
@@ -63,7 +64,7 @@ class Chatbot:
         await self.set_cookie(self.session_token)
 
     async def set_cookie(self, session_token):
-        #设置session_token
+        # 设置session_token
         await self.content.add_cookies(
             [
                 {
@@ -77,7 +78,7 @@ class Chatbot:
 
     @driver.on_shutdown
     async def playwright_close(self):
-        #关闭浏览器
+        # 关闭浏览器
         await self.content.close()
         await self.browser.close()
         await self.playwright.__aexit__()
@@ -114,7 +115,7 @@ class Chatbot:
 
     @asynccontextmanager
     async def get_page(self):
-        #打开网页，这是一个异步上下文管理器，使用async with调用
+        # 打开网页，这是一个异步上下文管理器，使用async with调用
         page = await self.content.new_page()
         js = "Object.defineProperties(navigator, {webdriver:{get:()=>undefined}});"
         await page.add_init_script(js)
@@ -211,9 +212,10 @@ class Chatbot:
         else:
             logger.error("ChatGPT 登陆错误!")
 
+    @staticmethod
     async def get_cf_cookies(self, page: Page) -> None:
         logger.debug("正在获取cf cookies")
-        for i in range(20):
+        for _ in range(20):
             button = page.get_by_role("button", name="Verify you are human")
             if await button.count():
                 await button.click()
