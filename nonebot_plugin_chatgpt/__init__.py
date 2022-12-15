@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment,
 )
 from nonebot.log import logger
-from nonebot.params import CommandArg, _command_arg
+from nonebot.params import CommandArg, _command_arg, _command_start
 from nonebot.rule import to_me
 from nonebot.typing import T_State
 
@@ -55,6 +55,8 @@ def check_purview(event: MessageEvent) -> bool:
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
     message = _command_arg(state) or event.get_message()
     text = message.extract_plain_text().strip()
+    if start := _command_start(state):
+        text = text[len(start) :]
     try:
         msg = await chat_bot(**session[event]).get_chat_response(text)
         if (msg == "token失效，请重新设置token") and (
