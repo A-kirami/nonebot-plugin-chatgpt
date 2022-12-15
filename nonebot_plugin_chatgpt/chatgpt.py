@@ -1,22 +1,21 @@
 import asyncio
 import uuid
 from typing import Any, Dict, Optional
-from urllib.parse import urljoin
+from contextlib import asynccontextmanager
 import asyncio
 from nonebot import get_driver
 from nonebot.log import logger
 from nonebot.utils import escape_tag, run_sync
 from playwright.async_api import async_playwright
 from typing_extensions import Self
-
-from contextlib import asynccontextmanager
+from playwright.async_api import async_playwright, Route, Page
 
 driver = get_driver()
 try:
     import ujson as json
 except ModuleNotFoundError:
     import json
-from playwright.async_api import async_playwright, Route, Page
+
 
 SESSION_TOKEN_KEY = "__Secure-next-auth.session-token"
 
@@ -49,6 +48,7 @@ class Chatbot:
             raise ValueError("至少需要配置 session_token 或者 account 和 password")
 
     async def playwright_start(self):
+        #启动浏览器，在插件开始运行时调用
         playwright = await self.playwright.start()
         try:
             self.browser = await playwright.firefox.launch(
@@ -63,6 +63,7 @@ class Chatbot:
         await self.set_cookie(self.session_token)
 
     async def set_cookie(self, session_token):
+        #设置session_token
         await self.content.add_cookies(
             [
                 {
@@ -76,6 +77,7 @@ class Chatbot:
 
     @driver.on_shutdown
     async def playwright_close(self):
+        #关闭浏览器
         await self.content.close()
         await self.browser.close()
         await self.playwright.__aexit__()
@@ -112,6 +114,7 @@ class Chatbot:
 
     @asynccontextmanager
     async def get_page(self):
+        #打开网页，这是一个异步上下文管理器，使用async with调用
         page = await self.content.new_page()
         js = "Object.defineProperties(navigator, {webdriver:{get:()=>undefined}});"
         await page.add_init_script(js)
