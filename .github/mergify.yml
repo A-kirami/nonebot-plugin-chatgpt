@@ -50,7 +50,6 @@ pull_request_rules:
   - name: 所有者添加批准标签后加入合并队列
     conditions:
       - author=A-kirami
-      - check-success=CodeTests
       - label=approve
     actions:
       review:
@@ -61,7 +60,6 @@ pull_request_rules:
       - "#approved-reviews-by>=1"
       - "#review-requested=0"
       - "#changes-requested-reviews-by=0"
-      - check-success=CodeTests
       - or:
         - author=A-kirami
         - and:
