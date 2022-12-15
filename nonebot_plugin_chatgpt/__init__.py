@@ -53,6 +53,8 @@ def check_purview(event: MessageEvent) -> bool:
 
 @matcher.handle(parameterless=[cooldow_checker(config.chatgpt_cd_time)])
 async def ai_chat(event: MessageEvent, state: T_State) -> None:
+    if not chat_bot.content:
+        await chat_bot.playwright_start()
     message = _command_arg(state) or event.get_message()
     text = message.extract_plain_text().strip()
     if start := _command_start(state):
