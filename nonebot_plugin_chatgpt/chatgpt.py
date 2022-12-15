@@ -1,12 +1,13 @@
 import asyncio
 import uuid
-from typing import Any, Dict, Optional
 from contextlib import asynccontextmanager
+from typing import Any, Dict, Optional
+
 from nonebot import get_driver
 from nonebot.log import logger
 from nonebot.utils import escape_tag, run_sync
+from playwright.async_api import Page, Route, async_playwright
 from typing_extensions import Self
-from playwright.async_api import async_playwright, Route, Page
 
 driver = get_driver()
 try:
