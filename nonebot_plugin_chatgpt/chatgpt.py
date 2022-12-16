@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 from nonebot import get_driver
 from nonebot.log import logger
-from nonebot.utils import escape_tag, run_sync
+from nonebot.utils import escape_tag
 from playwright.async_api import Page, Route, async_playwright
 from typing_extensions import Self
 
@@ -140,11 +140,11 @@ class Chatbot:
             if await session_expired.is_visible():
                 logger.debug("检测到session过期")
                 return "token失效，请重新设置token"
-            next = page.locator(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
-            if await next.is_visible():
+            next_botton = page.locator(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
+            if await next_botton.is_visible():
                 logger.debug("检测到初次打开弹窗")
-                await next.click()
-                await next.click()
+                await next_botton.click()
+                await next_botton.click()
                 await page.click(".btn.flex.justify-center.gap-2.btn-primary.ml-auto")
             async with page.expect_response(
                 "https://chat.openai.com/backend-api/conversation",
@@ -189,7 +189,7 @@ class Chatbot:
                 await page.wait_for_load_state("domcontentloaded")
                 session_expired = page.locator("text=Your session has expired")
                 if await session_expired.count():
-                    logger.opt(colors=True).error(f"刷新会话失败, session token 已过期, 请重新设置")
+                    logger.opt(colors=True).error("刷新会话失败, session token 已过期, 请重新设置")
             cookies = await self.content.cookies()
             for i in cookies:
                 if i["name"] == SESSION_TOKEN_KEY:
