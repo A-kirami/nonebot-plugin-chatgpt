@@ -189,7 +189,7 @@ class Chatbot:
                 await page.wait_for_load_state("domcontentloaded")
                 session_expired = page.locator("text=Your session has expired")
                 if await session_expired.count():
-                    logger.opt(colors=True).error(f"刷新会话失败, session token 已过期, 请重新设置")
+                    logger.opt(colors=True).error("刷新会话失败, session token 已过期, 请重新设置")
             cookies = await self.content.cookies()
             for i in cookies:
                 if i["name"] == SESSION_TOKEN_KEY:
