@@ -52,7 +52,7 @@ class Chatbot:
         playwright = await self.playwright.start()
         try:
             self.browser = await playwright.firefox.launch(
-                headless=False,
+                headless=True,
                 proxy={"server": self.proxies} if self.proxies else None,  # your proxy
             )
         except Exception as e:
