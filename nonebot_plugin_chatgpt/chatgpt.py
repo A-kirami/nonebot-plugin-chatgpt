@@ -39,7 +39,6 @@ class Chatbot:
         self.parent_id = None
         self.conversation_id = None
         self.browser = None
-        self.is_first_run = True
         self.playwright = async_playwright()
         if self.session_token:
             self.auto_auth = False
@@ -53,7 +52,7 @@ class Chatbot:
         playwright = await self.playwright.start()
         try:
             self.browser = await playwright.firefox.launch(
-                headless=True,
+                headless=False,
                 proxy={"server": self.proxies} if self.proxies else None,  # your proxy
             )
         except Exception as e:
@@ -63,8 +62,9 @@ class Chatbot:
         self.content = await self.browser.new_context(user_agent=ua)
         await self.set_cookie(self.session_token)
 
-    async def set_cookie(self, session_token):
+    async def set_cookie(self, session_token: str):
         """设置session_token"""
+        self.session_token = session_token
         await self.content.add_cookies(
             [
                 {
@@ -121,9 +121,10 @@ class Chatbot:
 
     async def get_chat_response(self, prompt: str) -> str:
         async with self.get_page() as page:
-            logger.debug("正在发送请求")
-            if self.proxies:
+            await page.wait_for_load_state("domcontentloaded")
+            if not await page.locator("text=OpenAI Discord").is_visible():
                 await self.get_cf_cookies(page)
+            logger.debug("正在发送请求")
 
             async def change_json(route: Route):
                 await route.continue_(
@@ -133,32 +134,33 @@ class Chatbot:
             await self.content.route(
                 "https://chat.openai.com/backend-api/conversation", change_json
             )
-            if self.is_first_run:
-                await page.wait_for_selector(
-                    ".btn.flex.justify-center.gap-2.btn-neutral.ml-auto"
-                )
-                await page.click(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
-                await page.click(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_load_state("networkidle")
+            session_expired = page.locator("button", has_text="Log in")
+            if await session_expired.is_visible():
+                logger.debug("检测到session过期")
+                return "token失效，请重新设置token"
+            next = page.locator(".btn.flex.justify-center.gap-2.btn-neutral.ml-auto")
+            if await next.is_visible():
+                logger.debug("检测到初次打开弹窗")
+                await next.click()
+                await next.click()
                 await page.click(".btn.flex.justify-center.gap-2.btn-primary.ml-auto")
-                self.is_first_run = False
-            await page.wait_for_selector("textarea")
             async with page.expect_response(
                 "https://chat.openai.com/backend-api/conversation",
                 timeout=self.timeout * 1000,
             ) as response_info:
                 textarea = page.locator("textarea")
                 botton = page.locator("button").last
+                logger.debug("正在等待回复")
                 for _ in range(3):
-                    if await textarea.is_enabled():
-                        await textarea.fill(prompt)
+                    await textarea.fill(prompt)
                     await page.wait_for_timeout(500)
                     if await botton.is_enabled():
                         await botton.click()
             response = await response_info.value
             if response.status == 429:
                 return "请求过多，请放慢速度"
-            if response.status == 401:
-                return "token失效，请重新设置token"
             if response.status == 403:
                 await self.get_cf_cookies(page)
                 return await self.get_chat_response(prompt)
@@ -182,23 +184,20 @@ class Chatbot:
             await self.login()
         else:
             async with self.get_page() as page:
-                cf = page.locator("#challenging-running")
-                if await cf.count():
+                if not await page.locator("text=OpenAI Discord").is_visible():
                     await self.get_cf_cookies(page)
-                async with page.expect_request(
-                    "https://chat.openai.com/api/auth/session"
-                ) as session:
-                    page.goto("https://chat.openai.com/chat")
-                request = await session.value
-                response = await request.response()
-            if response.status != 200:
-                logger.opt(colors=True).error(
-                    f"刷新会话失败: <r>HTTP{response.status}</r> {escape_tag(await response.text())}"
-                )
+                await page.wait_for_load_state("domcontentloaded")
+                session_expired = page.locator("text=Your session has expired")
+                if await session_expired.count():
+                    logger.opt(colors=True).error(f"刷新会话失败, session token 已过期, 请重新设置")
+            cookies = await self.content.cookies()
+            for i in cookies:
+                if i["name"] == SESSION_TOKEN_KEY:
+                    self.session_token = i["value"]
+                    break
             logger.debug("刷新会话成功")
 
-    @run_sync
-    def login(self) -> None:
+    async def login(self) -> None:
         from OpenAIAuth.OpenAIAuth import OpenAIAuth
 
         auth = OpenAIAuth(self.account, self.password, bool(self.proxies), self.proxies)  # type: ignore
@@ -211,13 +210,13 @@ class Chatbot:
         if not auth.access_token:
             logger.error("ChatGPT 登陆错误!")
         if auth.session_token:
-            self.session_token = auth.session_token
+            await self.set_cookie(auth.session_token)
         elif possible_tokens := auth.session.cookies.get(SESSION_TOKEN_KEY):
             if len(possible_tokens) > 1:
-                self.session_token = possible_tokens[0]
+                await self.set_cookie(possible_tokens[0])
             else:
                 try:
-                    self.session_token = possible_tokens
+                    await self.set_cookie(possible_tokens)
                 except Exception as e:
                     logger.opt(exception=e).error("ChatGPT 登陆错误!")
         else:
@@ -234,8 +233,8 @@ class Chatbot:
             if await label.count():
                 await label.click()
             await page.wait_for_timeout(1000)
-            textarea = page.locator("textarea")
-            if await textarea.count():
+            cf = page.locator("text=OpenAI Discord")
+            if await cf.is_visible():
                 break
         else:
             logger.error("cf cookies获取失败")

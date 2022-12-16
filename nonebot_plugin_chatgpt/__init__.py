@@ -64,7 +64,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         if (msg == "token失效，请重新设置token") and (
             chat_bot.session_token != config.chatgpt_session_token
         ):
-            chat_bot.session_token = config.chatgpt_session_token
+            await chat_bot.set_cookie(config.chatgpt_session_token)
             msg = await chat_bot(**session[event]).get_chat_response(text)
     except Exception as e:
         error = f"{type(e).__name__}: {e}"

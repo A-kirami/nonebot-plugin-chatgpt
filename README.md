@@ -96,7 +96,7 @@ windows系统需要在env文件中设置fastapi_reload=false
 
 ### 获取 session_token
 
-1. 登录 https://chat.openai.com/chat
+1. 登录 https://chat.openai.com/chat，并点掉所有弹窗
 2. 按 `F12` 打开控制台
 3. 切换到 `Application/应用` 选项卡，找到 `Cookies`
 4. 复制 `__Secure-next-auth.session-token` 的值，配置到 `CHATGPT_SESSION_TOKEN` 即可
