@@ -84,10 +84,10 @@ class Session(dict):
         else:
             conversation_id = value["conversation_id"]
             parent_id = value["parent_id"]
-        if self.__getitem__(event):
+        if self[event]:
             if isinstance(value, tuple):
-                self.__getitem__(event)["conversation_id"].append(conversation_id)
-                self.__getitem__(event)["parent_id"].append(parent_id)
+                self[event]["conversation_id"].append(conversation_id)
+                self[event]["parent_id"].append(parent_id)
         else:
             super().__setitem__(
                 self.id(event),
@@ -126,11 +126,10 @@ class Session(dict):
         sid = self.id(event)
         return setting.session[sid]
 
-    def count(self, event: MessageEvent):
+    def count(self, event: MessageEvent) -> int:
         return len(self[event]["conversation_id"])
 
-    def pop(self, event: MessageEvent):
+    def pop(self, event: MessageEvent) -> Tuple[str, str]:
         conversation_id = self[event]["conversation_id"].pop()
         parent_id = self[event]["parent_id"].pop()
-
         return conversation_id, parent_id
