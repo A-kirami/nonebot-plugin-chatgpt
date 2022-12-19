@@ -23,7 +23,7 @@ _✨ ChatGPT AI 对话 ✨_
 
 ## 📖 介绍
 
-智能对话聊天插件，核心部分参考 [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT) 实现。
+智能对话聊天插件。
 
 ## 💿 安装
 
@@ -69,9 +69,9 @@ _✨ ChatGPT AI 对话 ✨_
 
 ## ⚙️ 配置
 
-在 nonebot2 项目的`.env`文件中添加下表中的必填配置（在arm平台，可能必须使用CHATGPT_SESSION_TOKEN登录）
+在 nonebot2 项目的 `.env` 文件中添加下表中的必填配置（在 **ARM** 平台，可能必须使用 `CHATGPT_SESSION_TOKEN` 登录）
 
-windows系统需要在env文件中设置fastapi_reload=false
+> ⚠️ **Windows** 系统下需要在 `.env.dev` 文件中设置 `FASTAPI_RELOAD=false`
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
@@ -85,7 +85,7 @@ windows系统需要在env文件中设置fastapi_reload=false
 | CHATGPT_TO_ME | 否 | True | 是否需要@机器人 |
 | CHATGPT_TIMEOUT | 否 | 30 | 请求服务器的超时时间，单位：秒 |
 | CHATGPT_API | 否 | https://chat.openai.com/ | API 地址，可配置反代 |
-| CHATGPT_IMAGE | 否 | False | 是否以图片形式发送。<br>如果启动时出现 `NotImplementedError` 错误，请在 `.env.dev` 中将 `fastapi_reload` 设置为 `False`<br>如果无法显示文字，请[点击此处](https://github.com/kexue-z/nonebot-plugin-htmlrender#%E5%B8%B8%E8%A7%81%E7%96%91%E9%9A%BE%E6%9D%82%E7%97%87)查看解决办法 |
+| CHATGPT_IMAGE | 否 | False | 是否以图片形式发送。<br>如果无法显示文字，请[点击此处](https://github.com/kexue-z/nonebot-plugin-htmlrender#%E5%B8%B8%E8%A7%81%E7%96%91%E9%9A%BE%E6%9D%82%E7%97%87)查看解决办法 |
 | CHATGPT_IMAGE_WIDTH | 否 | 500 | 消息图片宽度，单位：像素 |
 | CHATGPT_PRIORITY | 否 | 999 | 事件响应器优先级 |
 | CHATGPT_BLOCK | 否 | True | 是否阻断消息传播 |
