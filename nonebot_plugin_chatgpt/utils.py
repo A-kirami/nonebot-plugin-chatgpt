@@ -102,7 +102,7 @@ class Session(dict):
     def __delitem__(self, event: MessageEvent) -> None:
         sid = self.id(event)
         if sid in self:
-            return super().__delitem__(sid)
+            super().__delitem__(sid)
 
     def __missing__(self, _) -> Dict[str, Any]:
         return {}
