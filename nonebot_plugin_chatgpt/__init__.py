@@ -1,4 +1,4 @@
-from nonebot import on_command, require
+from nonebot import on_command, require, get_driver
 from nonebot.adapters.onebot.v11 import (
     GroupMessageEvent,
     Message,
@@ -22,6 +22,9 @@ from nonebot_plugin_apscheduler import scheduler
 require("nonebot_plugin_htmlrender")
 
 from nonebot_plugin_htmlrender import md_to_pic
+
+
+driver_config = get_driver().config
 
 chat_bot = Chatbot(
     token=setting.token or config.chatgpt_session_token,
@@ -58,7 +61,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     message = _command_arg(state) or event.get_message()
     text = message.extract_plain_text().strip()
     if start := _command_start(state):
-        text = text[len(start) :]
+        text = text[len(start):]
     try:
         msg = await chat_bot(**session[event]).get_chat_response(text)
         if (msg == "token失效，请重新设置token") and (
@@ -75,8 +78,10 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     except Exception as e:
         error = f"{type(e).__name__}: {e}"
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
+        detailed_error_output = config.chatgpt_detailed_error or (
+            driver_config.environment == "dev" or driver_config.environment == "development")
         msg = f"ChatGPT 目前无法回复您的问题。"
-        if config.chatgpt_detailed_error:
+        if detailed_error_output:
             msg += f"\n{error}"
         else:
             msg += "可能的原因是同时提问过多，问题过于复杂等。"
@@ -92,7 +97,8 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     session[event] = chat_bot.conversation_id, chat_bot.parent_id
 
 
-refresh = on_command("刷新对话", aliases={"刷新会话"}, block=True, rule=to_me(), priority=1)
+refresh = on_command(
+    "刷新对话", aliases={"刷新会话"}, block=True, rule=to_me(), priority=1)
 
 
 @refresh.handle()
@@ -103,7 +109,8 @@ async def refresh_conversation(event: MessageEvent) -> None:
     await refresh.send("当前会话已刷新")
 
 
-export = on_command("导出对话", aliases={"导出会话"}, block=True, rule=to_me(), priority=1)
+export = on_command("导出对话", aliases={"导出会话"},
+                    block=True, rule=to_me(), priority=1)
 
 
 @export.handle()
@@ -137,7 +144,8 @@ async def import_conversation(event: MessageEvent, arg: Message = CommandArg()) 
     await import_.send("已成功导入会话", at_sender=True)
 
 
-save = on_command("保存对话", aliases={"保存会话"}, block=True, rule=to_me(), priority=1)
+save = on_command("保存对话", aliases={"保存会话"},
+                  block=True, rule=to_me(), priority=1)
 
 
 @save.handle()
@@ -152,7 +160,8 @@ async def save_conversation(event: MessageEvent, arg: Message = CommandArg()) ->
         await save.finish("你还没有任何会话记录", at_sender=True)
 
 
-check = on_command("查看对话", aliases={"查看会话"}, block=True, rule=to_me(), priority=1)
+check = on_command("查看对话", aliases={"查看会话"},
+                   block=True, rule=to_me(), priority=1)
 
 
 @check.handle()
@@ -161,7 +170,8 @@ async def check_conversation(event: MessageEvent) -> None:
     await check.send(f"已保存的会话有:\n{name_list}", at_sender=True)
 
 
-switch = on_command("切换对话", aliases={"切换会话"}, block=True, rule=to_me(), priority=1)
+switch = on_command("切换对话", aliases={"切换会话"},
+                    block=True, rule=to_me(), priority=1)
 
 
 @switch.handle()
@@ -183,7 +193,8 @@ async def refresh_session() -> None:
     setting.save()
 
 
-rollback = on_command("回滚对话", aliases={"回滚会话"}, block=True, rule=to_me(), priority=1)
+rollback = on_command(
+    "回滚对话", aliases={"回滚会话"}, block=True, rule=to_me(), priority=1)
 
 
 @rollback.handle()
