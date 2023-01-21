@@ -66,11 +66,22 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         ):
             await chat_bot.set_cookie(config.chatgpt_session_token)
             msg = await chat_bot(**session[event]).get_chat_response(text)
-    except Exception as e:
+    except TimeoutError as e:
         error = f"{type(e).__name__}: {e}"
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
         await matcher.finish(
-            f"请求 ChatGPT 服务器时出现问题，请稍后再试\n错误信息: {error}", at_sender=True
+            f"ChatGPT回复已超时。", at_sender=True
+        )
+    except Exception as e:
+        error = f"{type(e).__name__}: {e}"
+        logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
+        msg = f"ChatGPT 目前无法回复您的问题。"
+        if config.chatgpt_detailed_error:
+            msg += f"\n{error}"
+        else:
+            msg += "可能的原因是同时提问过多，问题过于复杂等。"
+        await matcher.finish(
+            msg, at_sender=True
         )
     if config.chatgpt_image:
         if msg.count("```") % 2 != 0:

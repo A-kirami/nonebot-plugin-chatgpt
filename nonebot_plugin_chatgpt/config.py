@@ -24,6 +24,7 @@ class Config(BaseModel, extra=Extra.ignore):
     chatgpt_scope: Literal["private", "public"] = "private"
     chatgpt_data: Path = Path(__file__).parent
     chatgpt_max_rollback: int = 5
+    chatgpt_detailed_error: bool = False
 
 
 config = Config.parse_obj(get_driver().config)
