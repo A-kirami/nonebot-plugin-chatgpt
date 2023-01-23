@@ -1,4 +1,4 @@
-from nonebot import on_command, require, get_driver
+from nonebot import on_command, require
 from nonebot.adapters.onebot.v11 import (
     GroupMessageEvent,
     Message,
@@ -25,8 +25,6 @@ require("nonebot_plugin_htmlrender")
 
 from nonebot_plugin_htmlrender import md_to_pic
 
-
-driver_config = get_driver().config
 
 chat_bot = Chatbot(
     token=setting.token or config.chatgpt_session_token,
@@ -71,25 +69,22 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         ):
             await chat_bot.set_cookie(config.chatgpt_session_token)
             msg = await chat_bot(**session[event]).get_chat_response(text)
-    except TimeoutError as e:
-        error = f"{type(e).__name__}: {e}"
-        logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
-        await matcher.finish(
-            f"ChatGPT回复已超时。", at_sender=True
-        )
     except PlaywrightAPIError as e:
         error = f"{type(e).__name__}: {e}"
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
-        detailed_error_output = config.chatgpt_detailed_error or (
-            driver_config.environment == "dev" or driver_config.environment == "development")
-        msg = f"ChatGPT 目前无法回复您的问题。"
-        if detailed_error_output:
-            msg += f"\n{error}"
-        else:
-            msg += "可能的原因是同时提问过多，问题过于复杂等。"
-        await matcher.finish(
-            msg, at_sender=True
-        )
+        if type(e).__name__ == "TimeoutError":
+            await matcher.finish(
+                f"ChatGPT回复已超时。", at_sender=True
+            )
+        elif type(e).__name__ == "Error": 
+            msg = f"ChatGPT 目前无法回复您的问题。"
+            if config.chatgpt_detailed_error:
+                msg += f"\n{error}"
+            else:
+                msg += "可能的原因是同时提问过多，问题过于复杂等。"
+            await matcher.finish(
+                msg, at_sender=True
+            )
     if config.chatgpt_image:
         if msg.count("```") % 2 != 0:
             msg += "\n```"
