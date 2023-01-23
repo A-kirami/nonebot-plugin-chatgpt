@@ -10,6 +10,8 @@ from nonebot.params import CommandArg, _command_arg, _command_start
 from nonebot.rule import to_me
 from nonebot.typing import T_State
 
+from playwright._impl._api_types import Error as PlaywrightAPIError
+
 from .chatgpt import Chatbot
 from .config import config
 from .data import setting
@@ -75,7 +77,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         await matcher.finish(
             f"ChatGPT回复已超时。", at_sender=True
         )
-    except Exception as e:
+    except PlaywrightAPIError as e:
         error = f"{type(e).__name__}: {e}"
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
         detailed_error_output = config.chatgpt_detailed_error or (
