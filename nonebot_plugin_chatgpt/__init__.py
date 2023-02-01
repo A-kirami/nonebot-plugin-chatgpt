@@ -9,7 +9,6 @@ from nonebot.log import logger
 from nonebot.params import CommandArg, _command_arg, _command_start
 from nonebot.rule import to_me
 from nonebot.typing import T_State
-
 from playwright._impl._api_types import Error as PlaywrightAPIError
 
 from .chatgpt import Chatbot
@@ -24,7 +23,6 @@ from nonebot_plugin_apscheduler import scheduler
 require("nonebot_plugin_htmlrender")
 
 from nonebot_plugin_htmlrender import md_to_pic
-
 
 chat_bot = Chatbot(
     token=setting.token or config.chatgpt_session_token,
@@ -61,7 +59,7 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     message = _command_arg(state) or event.get_message()
     text = message.extract_plain_text().strip()
     if start := _command_start(state):
-        text = text[len(start):]
+        text = text[len(start) :]
     try:
         msg = await chat_bot(**session[event]).get_chat_response(text)
         if (msg == "token失效，请重新设置token") and (
@@ -73,18 +71,14 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         error = f"{type(e).__name__}: {e}"
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
         if type(e).__name__ == "TimeoutError":
-            await matcher.finish(
-                "ChatGPT回复已超时。", at_sender=True
-            )
+            await matcher.finish("ChatGPT回复已超时。", at_sender=True)
         elif type(e).__name__ == "Error":
             msg = "ChatGPT 目前无法回复您的问题。"
             if config.chatgpt_detailed_error:
                 msg += f"\n{error}"
             else:
                 msg += "可能的原因是同时提问过多，问题过于复杂等。"
-            await matcher.finish(
-                msg, at_sender=True
-            )
+            await matcher.finish(msg, at_sender=True)
     if config.chatgpt_image:
         if msg.count("```") % 2 != 0:
             msg += "\n```"
