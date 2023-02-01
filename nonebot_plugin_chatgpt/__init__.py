@@ -74,10 +74,10 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
         if type(e).__name__ == "TimeoutError":
             await matcher.finish(
-                f"ChatGPT回复已超时。", at_sender=True
+                "ChatGPT回复已超时。", at_sender=True
             )
-        elif type(e).__name__ == "Error": 
-            msg = f"ChatGPT 目前无法回复您的问题。"
+        elif type(e).__name__ == "Error":
+            msg = "ChatGPT 目前无法回复您的问题。"
             if config.chatgpt_detailed_error:
                 msg += f"\n{error}"
             else:
