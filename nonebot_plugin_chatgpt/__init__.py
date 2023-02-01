@@ -72,18 +72,19 @@ async def ai_chat(event: MessageEvent, state: T_State) -> None:
     except PlaywrightAPIError as e:
         error = f"{type(e).__name__}: {e}"
         logger.opt(exception=e).error(f"ChatGPT request failed: {error}")
-        if type(e).__name__ == "TimeoutError":
-            await matcher.finish(
-                "ChatGPT回复已超时。", at_sender=True
-            )
-        elif type(e).__name__ == "Error":
+        if type(e).__name__ == "Error":
             msg = "ChatGPT 目前无法回复您的问题。"
-            if config.chatgpt_detailed_error:
-                msg += f"\n{error}"
-            else:
-                msg += "可能的原因是同时提问过多，问题过于复杂等。"
+            msg += (
+                f"\n{error}"
+                if config.chatgpt_detailed_error
+                else "可能的原因是同时提问过多，问题过于复杂等。"
+            )
             await matcher.finish(
                 msg, at_sender=True
+            )
+        elif type(e).__name__ == "TimeoutError":
+            await matcher.finish(
+                "ChatGPT回复已超时。", at_sender=True
             )
     if config.chatgpt_image:
         if msg.count("```") % 2 != 0:
