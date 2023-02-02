@@ -106,7 +106,7 @@ class Chatbot:
             ],
             "conversation_id": self.conversation_id,
             "parent_message_id": self.parent_id,
-            "model": "text-davinci-002-render",
+            "model": "text-davinci-002-render-next",
         }
 
     @asynccontextmanager
