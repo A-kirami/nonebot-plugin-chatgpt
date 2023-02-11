@@ -153,13 +153,14 @@ class Chatbot:
                 timeout=self.timeout * 1000,
             ) as response_info:
                 textarea = page.locator("textarea")
-                botton = page.locator("button").last
+                botton = page.locator('button[class="absolute p-1 rounded-md text-gray-500 bottom-1.5 right-1 md:bottom-2.5 md:right-2 hover:bg-gray-100 dark:hover:text-gray-400 dark:hover:bg-gray-900 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"]')
                 logger.debug("正在等待回复")
                 for _ in range(3):
                     await textarea.fill(prompt)
-                    await page.wait_for_timeout(500)
                     if await botton.is_enabled():
                         await botton.click()
+                        break
+                    await page.wait_for_timeout(500)
             response = await response_info.value
             if response.status == 429:
                 return "请求过多，请放慢速度"
