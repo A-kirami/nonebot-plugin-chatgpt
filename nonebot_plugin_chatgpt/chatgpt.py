@@ -122,7 +122,7 @@ class Chatbot:
     async def get_chat_response(self, prompt: str) -> str:
         async with self.get_page() as page:
             await page.wait_for_load_state("domcontentloaded")
-            if not await page.locator("text=OpenAI Discord").is_visible():
+            if not await page.locator("text=Updates & FAQ").is_visible():
                 await self.get_cf_cookies(page)
             logger.debug("正在发送请求")
 
@@ -135,7 +135,6 @@ class Chatbot:
                 "https://chat.openai.com/backend-api/conversation", change_json
             )
             await page.wait_for_load_state("domcontentloaded")
-            await page.wait_for_load_state("networkidle")
             session_expired = page.locator("button", has_text="Log in")
             if await session_expired.is_visible():
                 logger.debug("检测到session过期")
@@ -152,15 +151,16 @@ class Chatbot:
                 "https://chat.openai.com/backend-api/conversation",
                 timeout=self.timeout * 1000,
             ) as response_info:
-                textarea = page.locator("textarea")
+                textarea = page.locator("textarea")               
                 botton = page.locator('button[class="absolute p-1 rounded-md text-gray-500 bottom-1.5 right-1 md:bottom-2.5 md:right-2 hover:bg-gray-100 dark:hover:text-gray-400 dark:hover:bg-gray-900 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"]')
-                logger.debug("正在等待回复")
+                print("正在等待回复")
                 for _ in range(3):
                     await textarea.fill(prompt)
                     if await botton.is_enabled():
                         await botton.click()
                         break
                     await page.wait_for_timeout(500)
+                        
             response = await response_info.value
             if response.status == 429:
                 return "请求过多，请放慢速度"
@@ -187,7 +187,7 @@ class Chatbot:
             await self.login()
         else:
             async with self.get_page() as page:
-                if not await page.locator("text=OpenAI Discord").is_visible():
+                if not await page.locator("text=Updates & FAQ").is_visible():
                     await self.get_cf_cookies(page)
                 await page.wait_for_load_state("domcontentloaded")
                 session_expired = page.locator("text=Your session has expired")
@@ -229,14 +229,17 @@ class Chatbot:
     async def get_cf_cookies(page: Page) -> None:
         logger.debug("正在获取cf cookies")
         for _ in range(20):
-            button = page.get_by_role("button", name="Verify you are human")
+            button = page.get_by_role("button", name="Verify you are human")         
             if await button.count():
                 await button.click()
-            label = page.locator("label span")
-            if await label.count():
-                await label.click()
+            try:
+                label = page.frame_locator("iframe[title=\"Widget containing a Cloudflare security challenge\"]").get_by_label("Verify you are human")
+                if await label.count():
+                    await label.check()
+            except:
+                pass
             await page.wait_for_timeout(1000)
-            cf = page.locator("text=OpenAI Discord")
+            cf = page.locator("text=Updates & FAQ")
             if await cf.is_visible():
                 break
         else:
