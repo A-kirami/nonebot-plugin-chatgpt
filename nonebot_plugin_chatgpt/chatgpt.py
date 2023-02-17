@@ -151,7 +151,7 @@ class Chatbot:
                 "https://chat.openai.com/backend-api/conversation",
                 timeout=self.timeout * 1000,
             ) as response_info:
-                textarea = page.locator("textarea")               
+                textarea = page.locator("textarea")
                 botton = page.locator('button[class="absolute p-1 rounded-md text-gray-500 bottom-1.5 right-1 md:bottom-2.5 md:right-2 hover:bg-gray-100 dark:hover:text-gray-400 dark:hover:bg-gray-900 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"]')
                 print("正在等待回复")
                 for _ in range(3):
@@ -180,7 +180,6 @@ class Chatbot:
             self.conversation_id = response["conversation_id"]
             logger.debug("发送请求结束")
         return response["message"]["content"]["parts"][0]
-
     async def refresh_session(self) -> None:
         logger.debug("正在刷新session")
         if self.auto_auth:
@@ -229,7 +228,7 @@ class Chatbot:
     async def get_cf_cookies(page: Page) -> None:
         logger.debug("正在获取cf cookies")
         for _ in range(20):
-            button = page.get_by_role("button", name="Verify you are human")         
+            button = page.get_by_role("button", name="Verify you are human")
             if await button.count():
                 await button.click()
             try:
