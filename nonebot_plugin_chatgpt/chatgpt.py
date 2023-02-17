@@ -130,7 +130,6 @@ class Chatbot:
                 await route.continue_(
                     post_data=json.dumps(self.get_payload(prompt)),
                 )
-
             await self.content.route(
                 "https://chat.openai.com/backend-api/conversation", change_json
             )
@@ -147,6 +146,7 @@ class Chatbot:
                 await next_botton.click()
                 await next_botton.click()
                 await page.click(".btn.flex.justify-center.gap-2.btn-primary.ml-auto")
+                
             async with page.expect_response(
                 "https://chat.openai.com/backend-api/conversation",
                 timeout=self.timeout * 1000,
