@@ -238,7 +238,7 @@ class Chatbot:
                 label2 = page.frame_locator("iframe[title=\"Widget containing a Cloudflare security challenge\"]").get_by_label("Verify you are human")
                 if await label2.count():
                     await label2.check()
-            except Exception as e:
+            except Exception as _:
                 pass
             await page.wait_for_timeout(1000)
             cf = page.locator("text=Updates & FAQ")
