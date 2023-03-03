@@ -139,14 +139,13 @@ class Chatbot:
             if await session_expired.is_visible():
                 logger.debug("检测到session过期")
                 return "token失效，请重新设置token"
-            next_botton = page.locator(
-                ".btn.flex.justify-center.gap-2.btn-neutral.ml-auto"
-            )
+            next_botton = page.get_by_role("button", name="Next")
+            next_botton2 = page.get_by_role("button", name="Done")
             if await next_botton.is_visible():
                 logger.debug("检测到初次打开弹窗")
                 await next_botton.click()
                 await next_botton.click()
-                await page.click(".btn.flex.justify-center.gap-2.btn-primary.ml-auto")
+                await next_botton2.click()
             async with page.expect_response(
                 "https://chat.openai.com/backend-api/conversation",
                 timeout=self.timeout * 1000,
