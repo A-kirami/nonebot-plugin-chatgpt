@@ -122,7 +122,7 @@ class Chatbot:
     async def get_chat_response(self, prompt: str) -> str:
         async with self.get_page() as page:
             await page.wait_for_load_state("domcontentloaded")
-            if not await page.locator("text=OpenAI Discord").is_visible():
+            if not await page.locator("text=Updates & FAQ").is_visible():
                 await self.get_cf_cookies(page)
             logger.debug("正在发送请求")
 
@@ -135,19 +135,17 @@ class Chatbot:
                 "https://chat.openai.com/backend-api/conversation", change_json
             )
             await page.wait_for_load_state("domcontentloaded")
-            await page.wait_for_load_state("networkidle")
             session_expired = page.locator("button", has_text="Log in")
             if await session_expired.is_visible():
                 logger.debug("检测到session过期")
                 return "token失效，请重新设置token"
-            next_botton = page.locator(
-                ".btn.flex.justify-center.gap-2.btn-neutral.ml-auto"
-            )
+            next_botton = page.get_by_role("button", name="Next")
+            next_botton2 = page.get_by_role("button", name="Done")
             if await next_botton.is_visible():
                 logger.debug("检测到初次打开弹窗")
                 await next_botton.click()
                 await next_botton.click()
-                await page.click(".btn.flex.justify-center.gap-2.btn-primary.ml-auto")
+                await next_botton2.click()
             async with page.expect_response(
                 "https://chat.openai.com/backend-api/conversation",
                 timeout=self.timeout * 1000,
@@ -187,7 +185,7 @@ class Chatbot:
             await self.login()
         else:
             async with self.get_page() as page:
-                if not await page.locator("text=OpenAI Discord").is_visible():
+                if not await page.locator("text=Updates & FAQ").is_visible():
                     await self.get_cf_cookies(page)
                 await page.wait_for_load_state("domcontentloaded")
                 session_expired = page.locator("text=Your session has expired")
@@ -235,8 +233,14 @@ class Chatbot:
             label = page.locator("label span")
             if await label.count():
                 await label.click()
+            try:
+                label2 = page.frame_locator("iframe[title=\"Widget containing a Cloudflare security challenge\"]").get_by_label("Verify you are human")
+                if await label2.count():
+                    await label2.check()
+            except Exception as _:
+                pass
             await page.wait_for_timeout(1000)
-            cf = page.locator("text=OpenAI Discord")
+            cf = page.locator("text=Updates & FAQ")
             if await cf.is_visible():
                 break
         else:
